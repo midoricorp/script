@@ -56,6 +56,65 @@ public class Script{
 
 	}
 
+	private static class Var implements Command {
+		String name;
+		Operation op;
+
+		public Var(String name, Operation op) {
+			this.name = name;
+			this.op = op;
+		}
+
+		public String exec() throws ScriptParseException {
+			if (op == null) {
+				symbolTable.put(name, "0");
+			} else {
+				symbolTable.put(name, op.eval());
+			}
+			return "";
+		}
+
+		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+			  ArrayList<Operation> ops = new ArrayList<Operation>();
+			  String input = null;
+			  String name = null;
+
+			  input = getToken(br);
+
+			  if (input == null) {
+				  throw new ScriptParseException("Var: unexpected EOF before varname");
+			  }
+
+			  name = input;
+
+			  input = getToken(br);
+
+			  if (input == null) {
+				  throw new ScriptParseException("Var: unexpected EOF before ;");
+			  }
+
+
+			  if (input.equals("=")) {
+				  while((input=getToken(br))!=null){
+					  System.out.println("Got token '"+input+"'");
+					  if (input.equals(";")) {
+						Operation  op = getOperation(ops);
+						return new Var(name, op);
+					  }
+					  ops.add(tokenToOp(input));
+
+
+				  }
+			  } else if (!input.equals(";")) {
+				  throw new ScriptParseException("Var: ; expceted");
+			  }
+
+			  return new Var(name,null);
+
+		  }
+
+	}
+
 	private static class If implements Command {
 		Operation op;
 		Command cmd;
@@ -447,12 +506,15 @@ public class Script{
 
 		public String eval() throws ScriptParseException {
 			if (symbolTable.get(name) == null) {
-				symbolTable.put(name, "0");
+				throw new ScriptParseException("Undefined variable: " + name);
 			}
 			return symbolTable.get(name);
 		}
 
-		public void assign(String value) {
+		public void assign(String value) throws ScriptParseException {
+			if (symbolTable.get(name) == null) {
+				throw new ScriptParseException("Undefined variable: " + name);
+			}
 			symbolTable.put(name, value);
 		}
 	}
@@ -703,6 +765,9 @@ public class Script{
 
 	  if (token.equals("while")) {
 		  return While.parse(br);
+	  }
+	  if (token.equals("var")) {
+		  return Var.parse(br);
 	  }
 	  if (token.equals("if")) {
 		  return If.parse(br);

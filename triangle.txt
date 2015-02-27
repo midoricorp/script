@@ -1,14 +1,14 @@
-size=15;
-i=size;
+var size=15;
+var i=size;
 while(i) {
-	j=i;
-	line = "";
+	var j=i;
+	var line = "";
 	while(j) {
 		j--;
 		line = " " . line;
 	}
 	line = line."*";
-	k = size - i;
+	var k = size - i;
 	k = k * 2;
 	while(k) {
 		line =  line . " " ;
