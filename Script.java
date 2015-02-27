@@ -10,10 +10,19 @@ public class Script{
 
 	static Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 
-	private interface Command {
-		public String exec();
+	private static class ScriptParseException extends Exception {
+		public ScriptParseException(String exe) {
+			super(exe);
+		}
 
 	}
+
+	private interface Command {
+		public String exec() throws ScriptParseException;
+
+	}
+
+
 
 	private static class Expression implements Command {
 		Operation op;
@@ -22,12 +31,12 @@ public class Script{
 			this.op = op;
 		}
 
-		public String exec() {
+		public String exec() throws ScriptParseException {
 			op.eval();
 			return "";
 		}
 
-		public static Command parse(PushbackReader br) throws IOException {
+		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
 			  ArrayList<Operation> ops = new ArrayList<Operation>();
 			  String input = null;
 			  while((input=getToken(br))!=null){
@@ -58,7 +67,7 @@ public class Script{
 			this.else_cmd = else_cmd;
 		}
 
-		public String exec() {
+		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			if (Integer.parseInt(op.eval()) != 0) {
 				sb.append(cmd.exec());
@@ -70,7 +79,7 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(PushbackReader br) throws IOException {
+		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
 
 			Operation op = null;
 			Command cmd = null;
@@ -80,8 +89,7 @@ public class Script{
 			token = getToken(br);
 
 			if ( !token.equals("(") ) {
-				System.err.println("If: Expected '('");
-				return null;
+				throw new ScriptParseException("If: Expected '('");
 			}
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
@@ -89,7 +97,7 @@ public class Script{
 			while (true) {
 				token = getToken(br);
 				if (token == null ) {
-					System.err.println("If: unexpected eof on condition");
+					throw new ScriptParseException("If: unexpected eof on condition");
 				}
 
 				if (token.equals(")")) {
@@ -101,8 +109,7 @@ public class Script{
 
 			cmd = getCommand(br);
 			if (cmd == null) {
-				System.err.println("If: missing command");
-				return null;
+				throw new ScriptParseException("If: missing command");
 			}
 
 			token = getToken(br);
@@ -128,7 +135,7 @@ public class Script{
 			this.cmd = cmd;
 		}
 
-		public String exec() {
+		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			while (Integer.parseInt(op.eval()) != 0) {
 				sb.append(cmd.exec());
@@ -136,7 +143,7 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(PushbackReader br) throws IOException {
+		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
 
 			Operation op = null;
 			Command cmd = null;
@@ -145,8 +152,7 @@ public class Script{
 			token = getToken(br);
 
 			if ( !token.equals("(") ) {
-				System.err.println("While: Expected '('");
-				return null;
+				throw new ScriptParseException("While: Expected '('");
 			}
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
@@ -154,7 +160,7 @@ public class Script{
 			while (true) {
 				token = getToken(br);
 				if (token == null ) {
-					System.err.println("While: unexpected eof on condition");
+					throw new ScriptParseException("While: unexpected eof on condition");
 				}
 
 				if (token.equals(")")) {
@@ -166,8 +172,7 @@ public class Script{
 
 			cmd = getCommand(br);
 			if (cmd == null) {
-				System.err.println("While: missing command");
-				return null;
+				throw new ScriptParseException("While: missing command");
 			}
 
 			return new While(op, cmd);
@@ -181,7 +186,7 @@ public class Script{
 			this.commands = commands;
 		}
 
-		public String exec() {
+		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			for (Command cmd : commands) {
 				sb.append(cmd.exec());
@@ -189,7 +194,7 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(PushbackReader br) throws IOException {
+		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
 			ArrayList<Command> commands = new ArrayList<Command>();
 
 
@@ -197,15 +202,14 @@ public class Script{
 			token = getToken(br);
 
 			if ( !token.equals("{") ) {
-				System.err.println("Block: Expected '{'");
-				return null;
+				throw new ScriptParseException("Block: Expected '{'");
 			}
 
 
 			while (true) {
 				token = getToken(br);
 				if (token == null ) {
-					System.err.println("Block: unexpected eof while expecting }");
+					throw new ScriptParseException("Block: unexpected eof while expecting }");
 				}
 
 				if (token.equals("}")) {
@@ -229,11 +233,11 @@ public class Script{
 			this.op = op;
 		}
 
-		public String exec() {
+		public String exec() throws ScriptParseException {
 			return op.eval() + "\n";
 		}
 
-		public static Command parse(PushbackReader br) throws IOException {
+		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
 
 			Operation op = null;
 
@@ -242,7 +246,7 @@ public class Script{
 			while (true) {
 				String token = getToken(br);
 				if (token == null ) {
-					System.err.println("Print: unexpected eof on condition");
+					throw new ScriptParseException("Print: unexpected eof on condition");
 				}
 
 				if (token.equals(";")) {
@@ -256,92 +260,130 @@ public class Script{
 	}
 
 	private interface Operation {
-		public String eval();
+		public String eval() throws ScriptParseException;
 	}
 
-	private static class Add implements Operation {
+	private static abstract class BinaryOperator implements Operation {
 		Operation left;
 		Operation right;
-		public String eval() {
+
+		public String eval() throws ScriptParseException {
+			if (left == null) {
+				throw new ScriptParseException(this.getClass().getName() + ": Missing left arg");
+			}
+
+			if (right == null) {
+				throw new ScriptParseException(this.getClass().getName() +": Missing right arg");
+			}
+
+			// must override to have proper return val
+			return null;
+		}
+
+	}
+
+	private static abstract class UnaryOperator implements Operation {
+		Operation right;
+
+		public String eval() throws ScriptParseException {
+			if (right == null) {
+				throw new ScriptParseException(this.getClass().getName() +": Missing right arg");
+			}
+
+			// must override to have proper return val
+			return null;
+		}
+
+	}
+
+	private static abstract class PostfixOperator implements Operation {
+		Operation left;
+
+		public String eval() throws ScriptParseException {
+			if (left == null) {
+				throw new ScriptParseException(this.getClass().getName() +": Missing left arg");
+			}
+
+			// must override to have proper return val
+			return null;
+		}
+
+	}
+
+
+	private static class Add extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) + Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Subtract implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class Subtract extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) - Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Multiply implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class Multiply extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) * Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Divide implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class Divide extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) / Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Modulo implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class Modulo extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) % Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class GreaterThan implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class GreaterThan extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.parseInt(left.eval()) > Integer.parseInt(right.eval())?"1":"0";
 		}
 	}
 
-	private static class LessThan implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class LessThan extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.parseInt(left.eval()) < Integer.parseInt(right.eval())?"1":"0";
 		}
 	}
 
-	private static class Equals implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class Equals extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return left.eval().equals(right.eval())?"1":"0";
 		}
 	}
 
-	private static class NotEquals implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class NotEquals extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return left.eval().equals(right.eval())?"0":"1";
 		}
 	}
 
-	private static class Not implements Operation {
-		Operation right;
-		public String eval() {
+	private static class Not extends UnaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return Integer.parseInt(right.eval()) == 0?"1":"0";
 		}
 	}
 
-	private static class Concat implements Operation {
-		Operation left;
-		Operation right;
-		public String eval() {
+	private static class Concat extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
 			return left.eval()+right.eval();
 		}
 	}
@@ -353,7 +395,7 @@ public class Script{
 			this.number = number;
 		}
 
-		public String eval() {
+		public String eval() throws ScriptParseException {
 			return number;
 		}
 	}
@@ -365,7 +407,7 @@ public class Script{
 			this.string = string.substring(1,string.length()-1);
 		}
 
-		public String eval() {
+		public String eval() throws ScriptParseException {
 			return string;
 		}
 	}
@@ -378,7 +420,7 @@ public class Script{
 			this.name = name;
 		}
 
-		public String eval() {
+		public String eval() throws ScriptParseException {
 			if (symbolTable.get(name) == null) {
 				symbolTable.put(name, "0");
 			}
@@ -390,11 +432,15 @@ public class Script{
 		}
 	}
 
-	private static class Assign implements Operation {
-		Variable var;
-		Operation value;
-		public String eval() {
-			String v = value.eval();
+	private static class Assign extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
+
+			if (!(left instanceof Variable)) {
+				throw new ScriptParseException("Assign: attempting to assign value to non-variable type");
+			}
+			Variable var = (Variable)left;
+			String v = right.eval();
 			var.assign(v);
 			return v;
 		}
@@ -434,168 +480,53 @@ public class Script{
 		  }
 	}
 	
-	private static Operation getOperation(List<Operation> ops) {
+	private static Operation getOperation(List<Operation> ops) throws ScriptParseException {
+
+		// assignment order ! * / % + - . < > == != =
+		// order based on http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
+
+		Class classes[] = {
+			Not.class, //unary
+			Multiply.class, Divide.class, Modulo.class,  // multiplicative
+			Add.class, Subtract.class, Concat.class, // additive
+			LessThan.class, GreaterThan.class, // relational
+	       		Equals.class, NotEquals.class, // equality
+			Assign.class  // assignment 
+		};
 
 
-		// assignment order ! * / + - < > == != . =
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Not) {
-
-				Not op = (Not)command;
-				
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Multiply ) {
-
-				Multiply op = (Multiply)command;
-				
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Divide ) {
-				
-				Divide op = (Divide)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Modulo ) {
-				
-				Modulo op = (Modulo)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Add ) {
-
-				Add op = (Add)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Subtract ) {
-				
-				Subtract op = (Subtract)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Concat) {
-				
-				Concat op = (Concat)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof LessThan ) {
-				
-				LessThan op = (LessThan)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof GreaterThan ) {
-				
-				GreaterThan op = (GreaterThan)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Equals) {
-				
-				Equals op = (Equals)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof NotEquals) {
-				
-				NotEquals op = (NotEquals)command;
-				op.left = ops.get(i-1);
-				op.right = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < ops.size(); i++) {
-			Operation command = ops.get(i);
-			if ( command instanceof Assign ) {
-				Assign op = (Assign)command;
-				
-				op.var = (Variable)ops.get(i-1);
-				op.value = ops.get(i+1);
-				ops.remove(i+1);
-				ops.remove(i-1);
-				i--;
+		for (Class clazz : classes) {
+			for (int i = 0; i < ops.size(); i++) {
+				Operation command = ops.get(i);
+				if ( clazz.isInstance(command) ) {
+					if (UnaryOperator.class.isAssignableFrom(command.getClass())) {
+						UnaryOperator op = (UnaryOperator)command;
+						op.right = ops.get(i+1);
+						ops.remove(i+1);
+					} else if (PostfixOperator.class.isAssignableFrom(command.getClass())) {
+						PostfixOperator op = (PostfixOperator)command;
+						op.left = ops.get(i-1);
+						ops.remove(i-1);
+						i--;
+					} else if (BinaryOperator.class.isAssignableFrom(command.getClass())) {
+						BinaryOperator op = (BinaryOperator)command;
+						op.left = ops.get(i-1);
+						op.right = ops.get(i+1);
+						ops.remove(i+1);
+						ops.remove(i-1);
+						i--;
+					}
+				}
 			}
 		}
 
 
 		if (ops.size() > 1 ) {
-			System.err.println("Ops: incomplete reduction ops.size=" +ops.size());
+			String list = "";
+			for (Operation op : ops) {
+				list += " " + op.getClass().getName();
+			}
+			throw new ScriptParseException("Ops: incomplete reduction ops.size=" +ops.size() + "(" + list + ")");
 		}
 
 
@@ -734,7 +665,7 @@ public class Script{
   }
 
 
-  private static Command getCommand(PushbackReader br) throws IOException {
+  private static Command getCommand(PushbackReader br) throws IOException, ScriptParseException {
 	  String token = getToken(br);
 	  if (token == null) {
 		  return null;
@@ -767,11 +698,17 @@ public class Script{
  
 		Command cmd = null;
 		while((cmd = getCommand(br))!=null){
-			System.out.println(cmd.exec());
+			try {
+				System.out.println(cmd.exec());
+			} catch(ScriptParseException e) {
+				System.out.println(e.getMessage());
+			}
 		}
  
 	}catch(IOException io){
 		io.printStackTrace();
+	}catch(ScriptParseException spe){
+		System.err.println(spe.getMessage());
 	}	
   }
 }
