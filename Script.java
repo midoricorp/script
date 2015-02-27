@@ -304,12 +304,37 @@ public class Script{
 				throw new ScriptParseException(this.getClass().getName() +": Missing left arg");
 			}
 
+			if (!(left instanceof Variable)) {
+				throw new ScriptParseException(this.getClass().getName() +": attempting to assign value to non-variable type");
+			}
+
 			// must override to have proper return val
 			return null;
 		}
 
 	}
 
+	private static class Increment extends PostfixOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
+
+			Variable var = (Variable)left;
+			int v = Integer.parseInt(left.eval());
+			var.assign(Integer.toString(v+1));
+			return Integer.toString(v);
+		}
+	}	
+
+	private static class Decrement extends PostfixOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
+
+			Variable var = (Variable)left;
+			int v = Integer.parseInt(left.eval());
+			var.assign(Integer.toString(v-1));
+			return Integer.toString(v);
+		}
+	}	
 
 	private static class Add extends BinaryOperator {
 		public String eval() throws ScriptParseException {
@@ -455,6 +480,10 @@ public class Script{
 			return new Multiply();
 		  } else if(input.equals("/")) {
 			return new Divide();
+		  } else if(input.equals("++")) {
+			return new Increment();
+		  } else if(input.equals("--")) {
+			return new Decrement();
 		  } else if(input.equals("%")) {
 			return new Modulo();
 		  } else if(input.equals(".")) {
@@ -486,6 +515,7 @@ public class Script{
 		// order based on http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
 
 		Class classes[] = {
+			Increment.class, Decrement.class, // postfix
 			Not.class, //unary
 			Multiply.class, Divide.class, Modulo.class,  // multiplicative
 			Add.class, Subtract.class, Concat.class, // additive
@@ -614,7 +644,7 @@ public class Script{
 				  sb.append(c);
 
 				  // some control chars can be 2 chars long
-				  if (c == '=') {
+				  if (c == '=' || c == '+' || c == '-') {
 
 					  if ((input = br.read()) != -1) {
 						  char c2 = (char)input;

@@ -4,7 +4,7 @@ while(i) {
 	j=i;
 	line = "";
 	while(j) {
-		j = j-1;
+		j--;
 		line = " " . line;
 	}
 	line = line."*";
@@ -12,19 +12,19 @@ while(i) {
 	k = k * 2;
 	while(k) {
 		line =  line . " " ;
-		k = k - 1;
+		k--;
 	}
 	line = line . "*";
 
 		
 	print line;
-	i = i - 1;
+	i--;
 }
 j=size*2;
 line ="";
 while(j) {
 	line=line."*";
-	j = j-1;
+	j--;
 
 }
 print line;
