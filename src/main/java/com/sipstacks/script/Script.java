@@ -1,8 +1,10 @@
-import java.io.PushbackReader;
+package com.sipstacks.script;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Hashtable;
+import java.io.PushbackReader;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 public class Script{
