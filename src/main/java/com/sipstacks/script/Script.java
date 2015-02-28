@@ -64,7 +64,11 @@ public class Script{
 					Operation  op = getOperation(ops);
 					return new Expression(op);
 				  }
-				  ops.add(tokenToOp(input));
+				  try {
+				  	ops.add(tokenToOp(input));
+				  } catch (ScriptParseException spe) {
+					  throw new ScriptParseException("Expression: " + spe.getMessage(), sr);
+				  }
 
 
 			  }
@@ -120,8 +124,12 @@ public class Script{
 						Operation  op = getOperation(ops);
 						return new Var(name, op);
 					  }
-					  ops.add(tokenToOp(input));
 
+					  try {
+						  ops.add(tokenToOp(input));
+					  } catch (ScriptParseException spe) {
+						  throw new ScriptParseException("Var: " + spe.getMessage(), sr);
+					  }
 
 				  }
 			  } else if (!input.equals(";")) {
@@ -182,7 +190,11 @@ public class Script{
 					op = getOperation(ops);			
 					break;
 				}
-				ops.add(tokenToOp(token));
+				try {
+					ops.add(tokenToOp(token));
+				} catch (ScriptParseException spe) {
+					throw new ScriptParseException("If: " + spe.getMessage(), sr);
+				}
 			}
 
 			cmd = getCommand(sr);
@@ -244,7 +256,12 @@ public class Script{
 					op = getOperation(ops);			
 					break;
 				}
-				ops.add(tokenToOp(token));
+
+				try {
+					ops.add(tokenToOp(token));
+				} catch (ScriptParseException spe) {
+					throw new ScriptParseException("While: " + spe.getMessage(), sr);
+				}
 			}
 
 			cmd = getCommand(sr);
@@ -329,7 +346,12 @@ public class Script{
 					op = getOperation(ops);			
 					break;
 				}
-				ops.add(tokenToOp(token));
+				
+				try {
+					ops.add(tokenToOp(token));
+				} catch (ScriptParseException spe) {
+					throw new ScriptParseException("Print: " + spe.getMessage(), sr);
+				}
 			}
 			return new Print(op);
 		}
