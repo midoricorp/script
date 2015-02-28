@@ -51,7 +51,10 @@ public class Script{
 		}
 
 		public String exec() throws ScriptParseException {
-			op.eval();
+			// allow expression to be just a ;
+			if (op != null) {
+				op.eval();
+			}
 			return "";
 		}
 
@@ -62,6 +65,7 @@ public class Script{
 				  //System.out.println("Got token '"+input+"'");
 				  if (input.equals(";")) {
 					Operation  op = getOperation(ops);
+
 					return new Expression(op);
 				  }
 				  try {
@@ -122,6 +126,10 @@ public class Script{
 					  //System.out.println("Got token '"+input+"'");
 					  if (input.equals(";")) {
 						Operation  op = getOperation(ops);
+
+						if (op == null) {
+							throw new ScriptParseException("Var: missing operation for assignment", sr);
+						}
 						return new Var(name, op);
 					  }
 
@@ -188,6 +196,9 @@ public class Script{
 
 				if (token.equals(")")) {
 					op = getOperation(ops);			
+					if (op == null) {
+						throw new ScriptParseException("If: missing op inside ()", sr);
+					}
 					break;
 				}
 				try {
@@ -254,6 +265,9 @@ public class Script{
 
 				if (token.equals(")")) {
 					op = getOperation(ops);			
+					if (op == null) {
+						throw new ScriptParseException("While: missing op inside ()", sr);
+					}
 					break;
 				}
 
@@ -327,7 +341,11 @@ public class Script{
 		}
 
 		public String exec() throws ScriptParseException {
-			return op.eval() + "\n";
+			if (op != null) {
+				return op.eval() + "\n";
+			} else {
+				return "\n";
+			}
 		}
 
 		public static Command parse(ScriptScanner sr) throws ScriptParseException {
@@ -613,6 +631,13 @@ public class Script{
 	}
 	
 	private static Operation getOperation(List<Operation> ops) throws ScriptParseException {
+
+
+		// sanity check
+
+		if (ops.size() == 0) {
+			return null;
+		}
 
 		// assignment order ! * / % + - . < > == != =
 		// order based on http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
