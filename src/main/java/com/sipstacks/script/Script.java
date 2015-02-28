@@ -550,7 +550,7 @@ public class Script{
 		}
 	}
 
-	private static Operation tokenToOp(String input) {
+	private static Operation tokenToOp(String input) throws ScriptParseException {
 		  if (input.equals("+")) {
 			return new Add();
 		  } else if(input.equals("-")) {
@@ -583,9 +583,11 @@ public class Script{
 			  return new StringLiteral(input);
 		  } else if ( input.matches("^[0-9]+")) {
 			return new Number(input);
-		  } else {
+		  } else if ( input.matches("^[a-zA-Z][a-zA-Z0-9]*$")) {
 			return new Variable(input);
 		  }
+
+		  throw new ScriptParseException("Invalid Operator: '"+input+"'");
 	}
 	
 	private static Operation getOperation(List<Operation> ops) throws ScriptParseException {
