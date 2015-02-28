@@ -379,6 +379,24 @@ public class Script{
 		public String eval() throws ScriptParseException;
 	}
 
+	private static class LParen implements Operation {
+		Operation inner;
+		public String eval() throws ScriptParseException {
+			if (inner != null) {
+				return inner.eval();
+			}
+
+			// () is usless but legal
+			return "";
+		}
+	}
+
+	private static class RParen implements Operation {
+		public String eval() throws ScriptParseException {
+			throw new ScriptParseException("Trying to eval a ). This shouldn't happen");
+		}
+	}
+
 	private static abstract class BinaryOperator implements Operation {
 		Operation left;
 		Operation right;
@@ -619,6 +637,10 @@ public class Script{
 			return new LessThan();
 		  } else if(input.equals("!")) {
 			return new Not();
+		  } else if(input.equals("(")) {
+			return new LParen();
+		  } else if(input.equals(")")) {
+			return new RParen();
 		  } else if(input.startsWith("\"")) {
 			  return new StringLiteral(input);
 		  } else if ( input.matches("^[0-9]+")) {
@@ -631,14 +653,17 @@ public class Script{
 	}
 	
 	private static Operation getOperation(List<Operation> ops) throws ScriptParseException {
+		return getOperation(ops,0);
+	}
 
+	private static Operation getOperation(List<Operation> ops, int start) throws ScriptParseException {
 
 		// sanity check
 
 		if (ops.size() == 0) {
 			return null;
 		}
-
+		
 		// assignment order ! * / % + - . < > == != =
 		// order based on http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
 
@@ -652,10 +677,27 @@ public class Script{
 			Assign.class  // assignment 
 		};
 
+		// work your way backwards, only have the non-recursive part eval ()
+		if(start == 0) {
+			for (int i = ops.size()-1; i >= 0; i--) {
+				Operation command = ops.get(i);
+				if (command instanceof LParen) {
+					((LParen)command).inner = getOperation(ops,i+1);
+					ops.remove(i+1);
+				}
+			}
+		}
 
 		for (Class clazz : classes) {
-			for (int i = 0; i < ops.size(); i++) {
+			for (int i = start; i < ops.size(); i++) {
 				Operation command = ops.get(i);
+
+				// if start != 0 we are in a (), stop at the )
+
+				if (start > 0 && command instanceof RParen) {
+					break;
+				}
+
 				if ( clazz.isInstance(command) ) {
 					if (UnaryOperator.class.isAssignableFrom(command.getClass())) {
 						UnaryOperator op = (UnaryOperator)command;
@@ -676,6 +718,22 @@ public class Script{
 					}
 				}
 			}
+		}
+
+		if (start > 0) {
+			if(ops.size() > (start + 1)) {
+				if (ops.get(start+1) instanceof RParen) {
+					ops.remove(start+1);
+					return ops.get(start);
+				}
+			}
+
+			String list = "";
+			for (Operation op : ops.subList(start, ops.size())) {
+				list += " " + op.getClass().getName();
+			}
+			throw new ScriptParseException("Ops: incomplete reduction in () processing start=" + start + " ops.size=" +(ops.size()-start) + "(" + list + ")");
+
 		}
 
 

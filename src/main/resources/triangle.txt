@@ -3,29 +3,23 @@ var i=size;
 while(i) {
 	var j=i;
 	var line = "";
-	while(j) {
-		j--;
+	while(j--) {
 		line = " " . line;
 	}
 	line = line."*";
-	var k = size - i;
-	k = k * 2;
-	while(k) {
+	var k = (size - i)*2;
+	while(k--) {
 		line =  line . " " ;
-		k--;
 	}
 	line = line . "*";
-
 		
 	print line;
 	i--;
 }
-j=size+1;
-j=j*2;
+j=(size+1)*2;
 line ="";
-while(j) {
+while(j--) {
 	line=line."*";
-	j--;
 
 }
 print line;
