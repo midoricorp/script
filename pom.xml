@@ -21,7 +21,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.3.2</version>
                 <configuration>
-                    <keepAlive>true</keepAlive>
+                    <keepAlive>false</keepAlive>
                     <mainClass>com.sipstacks.script.Script</mainClass>
                 </configuration>
             </plugin>

@@ -20,7 +20,8 @@ while(i) {
 	print line;
 	i--;
 }
-j=size*2;
+j=size+1;
+j=j*2;
 line ="";
 while(j) {
 	line=line."*";

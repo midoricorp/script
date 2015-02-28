@@ -3,9 +3,11 @@ package com.sipstacks.script;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Stack;
 
 public class Script{
   
@@ -13,10 +15,25 @@ public class Script{
 	static Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 
 	private static class ScriptParseException extends Exception {
+		ScriptScanner ss;
 		public ScriptParseException(String exe) {
 			super(exe);
+			ss = null;
 		}
 
+		public ScriptParseException(String exe, ScriptScanner ss) {
+			super(exe);
+			this.ss = ss;
+		}
+
+		public String getMessage() {
+			String msg = super.getMessage();
+
+			if (ss != null) {
+				msg = ss.getLocation() + "\n" + msg;
+			}
+			return msg;
+		}
 	}
 
 	private interface Command {
@@ -38,11 +55,11 @@ public class Script{
 			return "";
 		}
 
-		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+		public static Command parse(ScriptScanner sr) throws ScriptParseException {
 			  ArrayList<Operation> ops = new ArrayList<Operation>();
 			  String input = null;
-			  while((input=getToken(br))!=null){
-				  System.out.println("Got token '"+input+"'");
+			  while((input=sr.getToken())!=null){
+				  //System.out.println("Got token '"+input+"'");
 				  if (input.equals(";")) {
 					Operation  op = getOperation(ops);
 					return new Expression(op);
@@ -52,7 +69,7 @@ public class Script{
 
 			  }
 
-			  return null;
+			  throw new ScriptParseException("Expression: hit end while expecting ;", sr);
 
 		  }
 
@@ -76,29 +93,29 @@ public class Script{
 			return "";
 		}
 
-		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+		public static Command parse(ScriptScanner sr) throws ScriptParseException {
 			  ArrayList<Operation> ops = new ArrayList<Operation>();
 			  String input = null;
 			  String name = null;
 
-			  input = getToken(br);
+			  input = sr.getToken();
 
 			  if (input == null) {
-				  throw new ScriptParseException("Var: unexpected EOF before varname");
+				  throw new ScriptParseException("Var: unexpected EOF before varname", sr);
 			  }
 
 			  name = input;
 
-			  input = getToken(br);
+			  input = sr.getToken();
 
 			  if (input == null) {
-				  throw new ScriptParseException("Var: unexpected EOF before ;");
+				  throw new ScriptParseException("Var: unexpected EOF before ;", sr);
 			  }
 
 
 			  if (input.equals("=")) {
-				  while((input=getToken(br))!=null){
-					  System.out.println("Got token '"+input+"'");
+				  while((input=sr.getToken())!=null){
+					  //System.out.println("Got token '"+input+"'");
 					  if (input.equals(";")) {
 						Operation  op = getOperation(ops);
 						return new Var(name, op);
@@ -108,7 +125,7 @@ public class Script{
 
 				  }
 			  } else if (!input.equals(";")) {
-				  throw new ScriptParseException("Var: ; expceted");
+				  throw new ScriptParseException("Var: ; expceted", sr);
 			  }
 
 			  return new Var(name,null);
@@ -140,25 +157,25 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+		public static Command parse(ScriptScanner sr) throws ScriptParseException {
 
 			Operation op = null;
 			Command cmd = null;
 			Command else_cmd = null;
 
 			String token;
-			token = getToken(br);
+			token = sr.getToken();
 
 			if ( !token.equals("(") ) {
-				throw new ScriptParseException("If: Expected '('");
+				throw new ScriptParseException("If: Expected '('", sr);
 			}
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
 			while (true) {
-				token = getToken(br);
+				token = sr.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("If: unexpected eof on condition");
+					throw new ScriptParseException("If: unexpected eof on condition", sr);
 				}
 
 				if (token.equals(")")) {
@@ -168,18 +185,17 @@ public class Script{
 				ops.add(tokenToOp(token));
 			}
 
-			cmd = getCommand(br);
+			cmd = getCommand(sr);
 			if (cmd == null) {
-				throw new ScriptParseException("If: missing command");
+				throw new ScriptParseException("If: missing command", sr);
 			}
 
-			token = getToken(br);
+			token = sr.getToken();
 
 			if ( token.equals("else") ) {
-				else_cmd = getCommand(br);
+				else_cmd = getCommand(sr);
 			} else {
-				br.unread(' ');
-				br.unread(token.toCharArray());
+				sr.pushBack(token);
 			}
 				
 
@@ -204,24 +220,24 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+		public static Command parse(ScriptScanner sr) throws ScriptParseException {
 
 			Operation op = null;
 			Command cmd = null;
 
 			String token;
-			token = getToken(br);
+			token = sr.getToken();
 
 			if ( !token.equals("(") ) {
-				throw new ScriptParseException("While: Expected '('");
+				throw new ScriptParseException("While: Expected '('", sr);
 			}
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
 			while (true) {
-				token = getToken(br);
+				token = sr.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("While: unexpected eof on condition");
+					throw new ScriptParseException("While: unexpected eof on condition", sr);
 				}
 
 				if (token.equals(")")) {
@@ -231,9 +247,9 @@ public class Script{
 				ops.add(tokenToOp(token));
 			}
 
-			cmd = getCommand(br);
+			cmd = getCommand(sr);
 			if (cmd == null) {
-				throw new ScriptParseException("While: missing command");
+				throw new ScriptParseException("While: missing command", sr);
 			}
 
 			return new While(op, cmd);
@@ -255,30 +271,29 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+		public static Command parse(ScriptScanner sr) throws ScriptParseException {
 			ArrayList<Command> commands = new ArrayList<Command>();
 
 
 			String token;
-			token = getToken(br);
+			token = sr.getToken();
 
 			if ( !token.equals("{") ) {
-				throw new ScriptParseException("Block: Expected '{'");
+				throw new ScriptParseException("Block: Expected '{'", sr);
 			}
 
 
 			while (true) {
-				token = getToken(br);
+				token = sr.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("Block: unexpected eof while expecting }");
+					throw new ScriptParseException("Block: unexpected eof while expecting }", sr);
 				}
 
 				if (token.equals("}")) {
 					break;
 				}
-				br.unread(' ');
-				br.unread(token.toCharArray());
-				Command cmd = getCommand(br);
+				sr.pushBack(token);
+				Command cmd = getCommand(sr);
 				commands.add(cmd);
 			}
 
@@ -298,16 +313,16 @@ public class Script{
 			return op.eval() + "\n";
 		}
 
-		public static Command parse(PushbackReader br) throws IOException, ScriptParseException {
+		public static Command parse(ScriptScanner sr) throws ScriptParseException {
 
 			Operation op = null;
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
 			while (true) {
-				String token = getToken(br);
+				String token = sr.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("Print: unexpected eof on condition");
+					throw new ScriptParseException("Print: unexpected eof on condition", sr);
 				}
 
 				if (token.equals(";")) {
@@ -631,182 +646,221 @@ public class Script{
 
 	}
 
-  private static String getToken(PushbackReader br) throws IOException {
-	  StringBuffer sb = new StringBuffer();
+	private static class ScriptScanner {
 
-	  boolean skipWhiteSpace = true;
-	  boolean inQuotes = false;
+		private PushbackReader pr;
+		private Stack<String> tokenStack;
+		private int lineNo;
 
-	  int input = 0;
+		public ScriptScanner(Reader r) {
+			pr = new PushbackReader(r, 10);
+		 	tokenStack = new Stack<String>();
+			lineNo = 0;
+		}
 
-	  while ((input = br.read()) != -1) {
-		  // end of stream
-		  if (input == -1) {
-			  break;
-		  }
+		public void pushBack(String token) {
+			tokenStack.push(token);
+		}
 
-		  char c = (char)input;
+		public String getLocation() {
+			return "Near Line: " + lineNo;
+		}
 
-		  if (skipWhiteSpace && 
-			(c == ' ' || c == '\t' || c == '\n')) {
-			  continue;
-		  }
+		public String getToken() throws ScriptParseException {
+			StringBuffer sb = new StringBuffer();
 
+			boolean skipWhiteSpace = true;
+			boolean inQuotes = false;
 
-		  skipWhiteSpace = false;
+			// if whe have pending pushedBack tokens
+			// retun them first
 
-		  if (inQuotes && c != '\"') {
-			  sb.append(c);
-			  continue;
-		  } else if (inQuotes) {
-			  // end quote hit, return the token
-			  sb.append(c);
-			  return sb.toString();
-		  }
+			if (!tokenStack.empty()) {
+				return tokenStack.pop();
+			}
 
-		  if (!inQuotes && c == '\"') {
-			  inQuotes = true;
-			  sb.append(c);
-			  continue;
-		  }
+			int input = 0;
 
-		  // not and not equals
+			try {
+				while ((input = pr.read()) != -1) {
+					// end of stream
+					if (input == -1) {
+						break;
+					}
 
-		  if (c == '!') {
-			  // no previous token so return the special char
-			  if (sb.length() == 0) {
-				  sb.append(c);
-				  if ((input = br.read()) != -1) {
-					  char c2 = (char)input;
-					  if (c2 == '=') {
-						  sb.append(c2);
-					  }
-					  else {
-						  // not a double char
-						  br.unread(input);
-					  }
-				  }
-				  return sb.toString();
-			  }
+					char c = (char)input;
 
-			  // we still have a token that needs to be returned
-			  // pushback and return that
-			  br.unread(input);
-			  return sb.toString();
-		  }
+					if (skipWhiteSpace && 
+						(c == ' ' || c == '\t' || c == '\n')) {
+
+						if ( c == '\n' ) {
+							lineNo++;
+						}
+						continue;
+					}
 
 
-		  // control chars end previous token & start a new one
+					skipWhiteSpace = false;
 
-		  if (c == '(' || c == ')' || c == '{' || c == '}'
-				  || c == '+' || c == '-' || c == '*' 
-				  || c == '/' || c == '%' || c == '='
-				  || c == ';' || c == '<' || c == '>' 
-				  || c == '.' ) {
-			  // no previous token so return the special char
-			  if (sb.length() == 0) {
-				  sb.append(c);
+					if (inQuotes && c != '\"') {
+						sb.append(c);
+						continue;
+					} else if (inQuotes) {
+						// end quote hit, return the token
+						sb.append(c);
+						return sb.toString();
+					}
 
-				  // some control chars can be 2 chars long
-				  if (c == '=' || c == '+' || c == '-') {
+					if (!inQuotes && c == '\"') {
+						inQuotes = true;
+						sb.append(c);
+						continue;
+					}
 
-					  if ((input = br.read()) != -1) {
-						  char c2 = (char)input;
-						  if (c == c2) {
-							  sb.append(c2);
-						  }
-						  else {
-							  // not a double char
-							  br.unread(input);
-						  }
-					  }
-				  }
-				  return sb.toString();
-			  }
+					// not and not equals
 
-			  // we still have a token that needs to be returned
-			  // pushback and return that
-			  br.unread(input);
-			  return sb.toString();
-		  }
-		  
-		  // now we got words or numbers
+					if (c == '!') {
+						// no previous token so return the special char
+						if (sb.length() == 0) {
+							sb.append(c);
+							if ((input = pr.read()) != -1) {
+								char c2 = (char)input;
+								if (c2 == '=') {
+									sb.append(c2);
+								}
+								else {
+									// not a double char
+									pr.unread(input);
+								}
+							 }
+							 return sb.toString();
+						}
 
-		  if ((c >= 'a' && c <= 'z')
-			|| (c >= 'A' && c <= 'Z')
-			|| (c >= '0' && c <= '9')) {
-			
-			sb.append(c);
-		  }
-		  else {
-			  if (sb.length() > 0) {
-				  return sb.toString();
-			  } else {
-				  // this char is invalid, puke & die
-			  	return null;
-			  }
-		  }
-	  }
+						// we still have a token that needs to be returned
+						// pushback and return that
+						pr.unread(input);
+						return sb.toString();
+					}
 
 
-	  // hit end of stream, return last token or null
-	  if (sb.length() > 0) {
-		  return sb.toString();
-	  } else {
+					// control chars end previous token & start a new one
+
+					if (c == '(' || c == ')' || c == '{' || c == '}'
+							|| c == '+' || c == '-' || c == '*' 
+							|| c == '/' || c == '%' || c == '='
+							|| c == ';' || c == '<' || c == '>' 
+							|| c == '.' ) {
+						// no previous token so return the special char
+						if (sb.length() == 0) {
+							sb.append(c);
+
+							// some control chars can be 2 chars long
+							if (c == '=' || c == '+' || c == '-') {
+
+								if ((input = pr.read()) != -1) {
+									char c2 = (char)input;
+									if (c == c2) {
+										sb.append(c2);
+									}
+									else {
+										// not a double char
+										pr.unread(input);
+									}
+								}
+							}
+							return sb.toString();
+						}
+
+						// we still have a token that needs to be returned
+						// pushback and return that
+						pr.unread(input);
+						return sb.toString();
+					}
+					  
+					// now we got words or numbers
+
+					if ((c >= 'a' && c <= 'z')
+						|| (c >= 'A' && c <= 'Z')
+						|| (c >= '0' && c <= '9')) {
+						
+						sb.append(c);
+					}
+					else {
+						if (sb.length() > 0) {
+							return sb.toString();
+						} else {
+							// this char is invalid, puke & die
+							return null;
+						}
+					}
+				}
+			} catch (IOException io) {
+				throw new ScriptParseException("IOException on parsing");
+			}
+
+
+			// hit end of stream, return last token or null
+			if (sb.length() > 0) {
+				return sb.toString();
+			} else {
+				return null;
+			}
+
+		}
+	}
+
+
+
+	private static Command getCommand(ScriptScanner sr) throws ScriptParseException {
+		String token = sr.getToken();
+		if (token == null) {
 		  return null;
-	  }
+		}
 
-  }
+		if (token.equals("while")) {
+		  return While.parse(sr);
+		}
+		if (token.equals("var")) {
+		  return Var.parse(sr);
+		}
+		if (token.equals("if")) {
+		  return If.parse(sr);
+		}
+		if (token.equals("print")) {
+		  return Print.parse(sr);
+		}
+		if (token.equals("{")) {
+		sr.pushBack(token);
+		return CommandBlock.parse(sr);
+		}
 
-
-  private static Command getCommand(PushbackReader br) throws IOException, ScriptParseException {
-	  String token = getToken(br);
-	  if (token == null) {
-		  return null;
-	  }
-
-	  if (token.equals("while")) {
-		  return While.parse(br);
-	  }
-	  if (token.equals("var")) {
-		  return Var.parse(br);
-	  }
-	  if (token.equals("if")) {
-		  return If.parse(br);
-	  }
-	  if (token.equals("print")) {
-		  return Print.parse(br);
-	  }
-	  if (token.equals("{")) {
-	  	br.unread(token.toCharArray());
-	        return CommandBlock.parse(br);
-	  }
-
-	  System.out.println("Pushing back token '" + token + "'");
-	  br.unread(token.toCharArray());
-	  return Expression.parse(br);
-  }
+		//System.out.println("Pushing back token '" + token + "'");
+		sr.pushBack(token);
+		return Expression.parse(sr);
+	}
 
   public static void main(String args[]) {
+	StringBuffer result = new StringBuffer();
 	try{
-		PushbackReader br = 
-                      new PushbackReader(new InputStreamReader(System.in), 10);
+		ScriptScanner sr = 
+                      new ScriptScanner(new InputStreamReader(System.in));
  
  
 		Command cmd = null;
-		while((cmd = getCommand(br))!=null){
+		while((cmd = getCommand(sr))!=null){
 			try {
-				System.out.println(cmd.exec());
+				result.append(cmd.exec());
 			} catch(ScriptParseException e) {
 				System.out.println(e.getMessage());
+				break;
 			}
 		}
  
-	}catch(IOException io){
-		io.printStackTrace();
 	}catch(ScriptParseException spe){
 		System.err.println(spe.getMessage());
 	}	
+
+	System.out.println(result.toString());
   }
 }
 
