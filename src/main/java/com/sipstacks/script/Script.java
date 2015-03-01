@@ -194,10 +194,12 @@ public class Script{
 
 			token = scanner.getToken();
 
-			if ( token.equals("else") ) {
-				else_cmd = getCommand();
-			} else {
-				scanner.pushBack(token);
+			if (token != null ) {
+				if ( token.equals("else") ) {
+					else_cmd = getCommand();
+				} else {
+					scanner.pushBack(token);
+				}
 			}
 				
 
