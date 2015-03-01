@@ -4,7 +4,7 @@ import java.io.Reader;
 import java.util.Stack;
 import java.io.IOException;
 
-public class ScriptScanner {
+class ScriptScanner {
 
 	private PushbackReader pr;
 	private Stack<String> tokenStack;
