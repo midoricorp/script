@@ -1,4 +1,4 @@
-var size=15;
+var size=(rand%10)+5;
 var i=size;
 while(i) {
 	var j=i;

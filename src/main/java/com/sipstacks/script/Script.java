@@ -8,18 +8,21 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Stack;
+import java.util.Random;
 
 public class Script{
   
 
 	Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 	ScriptScanner scanner;
+	Random random;
 
 	int loopLimit;
 
 	public Script(Reader in) {
 		Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 		scanner = new ScriptScanner(in);
+		random = new Random();
 		loopLimit = -1; // default no limit
 	}
 
@@ -530,6 +533,17 @@ public class Script{
 		}
 	}
 
+	private class Rand implements Operation {
+		String number;
+		
+		public Rand() {
+		}
+
+		public String eval() throws ScriptParseException {
+			return Integer.toString(random.nextInt(Integer.MAX_VALUE));
+		}
+	}
+
 	private class StringLiteral implements Operation {
 		String string;
 		
@@ -612,6 +626,8 @@ public class Script{
 			return new LParen();
 		  } else if(input.equals(")")) {
 			return new RParen();
+		  } else if(input.equals("rand")) {
+		  	return new Rand();
 		  } else if(input.startsWith("\"")) {
 			  return new StringLiteral(input);
 		  } else if ( input.matches("^[0-9]+")) {
