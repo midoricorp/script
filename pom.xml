@@ -22,7 +22,7 @@
                 <version>1.3.2</version>
                 <configuration>
                     <keepAlive>false</keepAlive>
-                    <mainClass>com.sipstacks.script.Script</mainClass>
+                    <mainClass>com.sipstacks.script.CliInterpreter</mainClass>
                 </configuration>
             </plugin>
 <plugin>
