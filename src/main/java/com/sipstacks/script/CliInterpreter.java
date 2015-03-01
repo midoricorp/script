@@ -7,6 +7,7 @@ public class CliInterpreter {
 	public static void main(String args[]) {
 		try{
 			Script s = new Script(new InputStreamReader(System.in));
+			s.setLoopLimit(100);
 			String result = s.run();
 			System.out.println(result);
 

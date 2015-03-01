@@ -15,13 +15,17 @@ public class Script{
 	Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 	ScriptScanner scanner;
 
+	int loopLimit;
+
 	public Script(Reader in) {
 		Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 		scanner = new ScriptScanner(in);
+		loopLimit = -1; // default no limit
 	}
 
-
-
+	public void setLoopLimit(int limit) {
+		this.loopLimit = limit;
+	}
 
 
 	private interface Command {
@@ -206,8 +210,13 @@ public class Script{
 
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
+			int counter = 0;
 			while (Integer.parseInt(op.eval()) != 0) {
+				if(loopLimit > 0 && counter > loopLimit) {
+					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter);
+				}
 				sb.append(cmd.exec());
+				counter++;
 			}
 			return sb.toString();
 		}
