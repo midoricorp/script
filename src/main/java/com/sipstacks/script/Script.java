@@ -12,9 +12,18 @@ import java.util.Stack;
 public class Script{
   
 
-	static Hashtable <String, String> symbolTable = new Hashtable<String,String>();
+	Hashtable <String, String> symbolTable = new Hashtable<String,String>();
+	ScriptScanner scanner;
 
-	private static class ScriptParseException extends Exception {
+	public Script(Reader in) {
+		Hashtable <String, String> symbolTable = new Hashtable<String,String>();
+		scanner = new ScriptScanner(in);
+	}
+
+
+
+
+	public static class ScriptParseException extends Exception {
 		ScriptScanner ss;
 		public ScriptParseException(String exe) {
 			super(exe);
@@ -43,12 +52,8 @@ public class Script{
 
 
 
-	private static class Expression implements Command {
+	private class Expression implements Command {
 		Operation op;
-
-		public Expression(Operation op) {
-			this.op = op;
-		}
 
 		public String exec() throws ScriptParseException {
 			// allow expression to be just a ;
@@ -58,39 +63,34 @@ public class Script{
 			return "";
 		}
 
-		public static Command parse(ScriptScanner sr) throws ScriptParseException {
+		public Expression() throws ScriptParseException {
 			  ArrayList<Operation> ops = new ArrayList<Operation>();
 			  String input = null;
-			  while((input=sr.getToken())!=null){
+			  while((input=scanner.getToken())!=null){
 				  //System.out.println("Got token '"+input+"'");
 				  if (input.equals(";")) {
 					Operation  op = getOperation(ops);
-
-					return new Expression(op);
+					this.op = op;
+					return;
 				  }
 				  try {
 				  	ops.add(tokenToOp(input));
 				  } catch (ScriptParseException spe) {
-					  throw new ScriptParseException("Expression: " + spe.getMessage(), sr);
+					  throw new ScriptParseException("Expression: " + spe.getMessage(), scanner);
 				  }
 
 
 			  }
 
-			  throw new ScriptParseException("Expression: hit end while expecting ;", sr);
+			  throw new ScriptParseException("Expression: hit end while expecting ;", scanner);
 
-		  }
+		}
 
 	}
 
-	private static class Var implements Command {
+	private class Var implements Command {
 		String name;
 		Operation op;
-
-		public Var(String name, Operation op) {
-			this.name = name;
-			this.op = op;
-		}
 
 		public String exec() throws ScriptParseException {
 			if (op == null) {
@@ -101,65 +101,58 @@ public class Script{
 			return "";
 		}
 
-		public static Command parse(ScriptScanner sr) throws ScriptParseException {
+		public Var() throws ScriptParseException {
 			  ArrayList<Operation> ops = new ArrayList<Operation>();
 			  String input = null;
 			  String name = null;
 
-			  input = sr.getToken();
+			  input = scanner.getToken();
 
 			  if (input == null) {
-				  throw new ScriptParseException("Var: unexpected EOF before varname", sr);
+				  throw new ScriptParseException("Var: unexpected EOF before varname", scanner);
 			  }
 
-			  name = input;
+			  this.name = input;
 
-			  input = sr.getToken();
+			  input = scanner.getToken();
 
 			  if (input == null) {
-				  throw new ScriptParseException("Var: unexpected EOF before ;", sr);
+				  throw new ScriptParseException("Var: unexpected EOF before ;", scanner);
 			  }
 
 
 			  if (input.equals("=")) {
-				  while((input=sr.getToken())!=null){
+				  while((input=scanner.getToken())!=null){
 					  //System.out.println("Got token '"+input+"'");
 					  if (input.equals(";")) {
 						Operation  op = getOperation(ops);
 
 						if (op == null) {
-							throw new ScriptParseException("Var: missing operation for assignment", sr);
+							throw new ScriptParseException("Var: missing operation for assignment", scanner);
 						}
-						return new Var(name, op);
+						this.op = op;
+						return;
 					  }
 
 					  try {
 						  ops.add(tokenToOp(input));
 					  } catch (ScriptParseException spe) {
-						  throw new ScriptParseException("Var: " + spe.getMessage(), sr);
+						  throw new ScriptParseException("Var: " + spe.getMessage(), scanner);
 					  }
 
 				  }
 			  } else if (!input.equals(";")) {
-				  throw new ScriptParseException("Var: ; expceted", sr);
+				  throw new ScriptParseException("Var: ; expceted", scanner);
 			  }
-
-			  return new Var(name,null);
 
 		  }
 
 	}
 
-	private static class If implements Command {
+	private class If implements Command {
 		Operation op;
 		Command cmd;
 		Command else_cmd;
-
-		public If(Operation op, Command cmd, Command else_cmd) {
-			this.op = op;
-			this.cmd = cmd;
-			this.else_cmd = else_cmd;
-		}
 
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
@@ -173,67 +166,64 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(ScriptScanner sr) throws ScriptParseException {
+		public If() throws ScriptParseException {
 
 			Operation op = null;
 			Command cmd = null;
 			Command else_cmd = null;
 
 			String token;
-			token = sr.getToken();
+			token = scanner.getToken();
 
 			if ( !token.equals("(") ) {
-				throw new ScriptParseException("If: Expected '('", sr);
+				throw new ScriptParseException("If: Expected '('", scanner);
 			}
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
 			while (true) {
-				token = sr.getToken();
+				token = scanner.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("If: unexpected eof on condition", sr);
+					throw new ScriptParseException("If: unexpected eof on condition", scanner);
 				}
 
 				if (token.equals(")")) {
 					op = getOperation(ops);			
 					if (op == null) {
-						throw new ScriptParseException("If: missing op inside ()", sr);
+						throw new ScriptParseException("If: missing op inside ()", scanner);
 					}
 					break;
 				}
 				try {
 					ops.add(tokenToOp(token));
 				} catch (ScriptParseException spe) {
-					throw new ScriptParseException("If: " + spe.getMessage(), sr);
+					throw new ScriptParseException("If: " + spe.getMessage(), scanner);
 				}
 			}
 
-			cmd = getCommand(sr);
+			cmd = getCommand();
 			if (cmd == null) {
-				throw new ScriptParseException("If: missing command", sr);
+				throw new ScriptParseException("If: missing command", scanner);
 			}
 
-			token = sr.getToken();
+			token = scanner.getToken();
 
 			if ( token.equals("else") ) {
-				else_cmd = getCommand(sr);
+				else_cmd = getCommand();
 			} else {
-				sr.pushBack(token);
+				scanner.pushBack(token);
 			}
 				
 
-			return new If(op, cmd, else_cmd);
+			this.op = op;
+			this.cmd = cmd;
+			this.else_cmd = else_cmd;
 		}
 	}
 
-	private static class While implements Command {
+	private class While implements Command {
 		Operation op;
 		Command cmd;
-
-		public While(Operation op, Command cmd) {
-			this.op = op;
-			this.cmd = cmd;
-		}
 
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
@@ -243,30 +233,30 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(ScriptScanner sr) throws ScriptParseException {
+		public While() throws ScriptParseException {
 
 			Operation op = null;
 			Command cmd = null;
 
 			String token;
-			token = sr.getToken();
+			token = scanner.getToken();
 
 			if ( !token.equals("(") ) {
-				throw new ScriptParseException("While: Expected '('", sr);
+				throw new ScriptParseException("While: Expected '('", scanner);
 			}
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
 			while (true) {
-				token = sr.getToken();
+				token = scanner.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("While: unexpected eof on condition", sr);
+					throw new ScriptParseException("While: unexpected eof on condition", scanner);
 				}
 
 				if (token.equals(")")) {
 					op = getOperation(ops);			
 					if (op == null) {
-						throw new ScriptParseException("While: missing op inside ()", sr);
+						throw new ScriptParseException("While: missing op inside ()", scanner);
 					}
 					break;
 				}
@@ -274,25 +264,23 @@ public class Script{
 				try {
 					ops.add(tokenToOp(token));
 				} catch (ScriptParseException spe) {
-					throw new ScriptParseException("While: " + spe.getMessage(), sr);
+					throw new ScriptParseException("While: " + spe.getMessage(), scanner);
 				}
 			}
 
-			cmd = getCommand(sr);
+			cmd = getCommand();
 			if (cmd == null) {
-				throw new ScriptParseException("While: missing command", sr);
+				throw new ScriptParseException("While: missing command", scanner);
 			}
 
-			return new While(op, cmd);
+			this.op = op;
+			this.cmd = cmd;
 		}
 	}
 
-	private static class CommandBlock implements Command {
+	private class CommandBlock implements Command {
 		ArrayList<Command> commands;
 
-		public CommandBlock(ArrayList<Command> commands) {
-			this.commands = commands;
-		}
 
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
@@ -302,43 +290,38 @@ public class Script{
 			return sb.toString();
 		}
 
-		public static Command parse(ScriptScanner sr) throws ScriptParseException {
+		public CommandBlock() throws ScriptParseException {
 			ArrayList<Command> commands = new ArrayList<Command>();
 
 
 			String token;
-			token = sr.getToken();
+			token = scanner.getToken();
 
 			if ( !token.equals("{") ) {
-				throw new ScriptParseException("Block: Expected '{'", sr);
+				throw new ScriptParseException("Block: Expected '{'", scanner);
 			}
 
 
 			while (true) {
-				token = sr.getToken();
+				token = scanner.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("Block: unexpected eof while expecting }", sr);
+					throw new ScriptParseException("Block: unexpected eof while expecting }", scanner);
 				}
 
 				if (token.equals("}")) {
 					break;
 				}
-				sr.pushBack(token);
-				Command cmd = getCommand(sr);
+				scanner.pushBack(token);
+				Command cmd = getCommand();
 				commands.add(cmd);
 			}
 
-
-			return new CommandBlock(commands);
+			this.commands = commands;
 		}
 	}
 
-	private static class Print implements Command {
+	private class Print implements Command {
 		Operation op;
-
-		public Print(Operation op) {
-			this.op = op;
-		}
 
 		public String exec() throws ScriptParseException {
 			if (op != null) {
@@ -348,16 +331,16 @@ public class Script{
 			}
 		}
 
-		public static Command parse(ScriptScanner sr) throws ScriptParseException {
+		public Print() throws ScriptParseException {
 
 			Operation op = null;
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
 			while (true) {
-				String token = sr.getToken();
+				String token = scanner.getToken();
 				if (token == null ) {
-					throw new ScriptParseException("Print: unexpected eof on condition", sr);
+					throw new ScriptParseException("Print: unexpected eof on condition", scanner);
 				}
 
 				if (token.equals(";")) {
@@ -368,10 +351,10 @@ public class Script{
 				try {
 					ops.add(tokenToOp(token));
 				} catch (ScriptParseException spe) {
-					throw new ScriptParseException("Print: " + spe.getMessage(), sr);
+					throw new ScriptParseException("Print: " + spe.getMessage(), scanner);
 				}
 			}
-			return new Print(op);
+			this.op = op;
 		}
 	}
 
@@ -379,7 +362,7 @@ public class Script{
 		public String eval() throws ScriptParseException;
 	}
 
-	private static class LParen implements Operation {
+	private class LParen implements Operation {
 		Operation inner;
 		public String eval() throws ScriptParseException {
 			if (inner != null) {
@@ -391,7 +374,7 @@ public class Script{
 		}
 	}
 
-	private static class RParen implements Operation {
+	private class RParen implements Operation {
 		public String eval() throws ScriptParseException {
 			throw new ScriptParseException("Trying to eval a ). This shouldn't happen");
 		}
@@ -448,7 +431,7 @@ public class Script{
 
 	}
 
-	private static class Increment extends PostfixOperator {
+	private class Increment extends PostfixOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 
@@ -459,7 +442,7 @@ public class Script{
 		}
 	}	
 
-	private static class Decrement extends PostfixOperator {
+	private class Decrement extends PostfixOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 
@@ -470,84 +453,84 @@ public class Script{
 		}
 	}	
 
-	private static class Add extends BinaryOperator {
+	private class Add extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) + Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Subtract extends BinaryOperator {
+	private class Subtract extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) - Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Multiply extends BinaryOperator {
+	private class Multiply extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) * Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Divide extends BinaryOperator {
+	private class Divide extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) / Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class Modulo extends BinaryOperator {
+	private class Modulo extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.toString(Integer.parseInt(left.eval()) % Integer.parseInt(right.eval()));
 		}
 	}
 
-	private static class GreaterThan extends BinaryOperator {
+	private class GreaterThan extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.parseInt(left.eval()) > Integer.parseInt(right.eval())?"1":"0";
 		}
 	}
 
-	private static class LessThan extends BinaryOperator {
+	private class LessThan extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.parseInt(left.eval()) < Integer.parseInt(right.eval())?"1":"0";
 		}
 	}
 
-	private static class Equals extends BinaryOperator {
+	private class Equals extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return left.eval().equals(right.eval())?"1":"0";
 		}
 	}
 
-	private static class NotEquals extends BinaryOperator {
+	private class NotEquals extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return left.eval().equals(right.eval())?"0":"1";
 		}
 	}
 
-	private static class Not extends UnaryOperator {
+	private class Not extends UnaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return Integer.parseInt(right.eval()) == 0?"1":"0";
 		}
 	}
 
-	private static class Concat extends BinaryOperator {
+	private class Concat extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 			return left.eval()+right.eval();
 		}
 	}
 
-	private static class Number implements Operation {
+	private class Number implements Operation {
 		String number;
 		
 		public Number(String number) {
@@ -559,7 +542,7 @@ public class Script{
 		}
 	}
 
-	private static class StringLiteral implements Operation {
+	private class StringLiteral implements Operation {
 		String string;
 		
 		public StringLiteral(String string) {
@@ -572,7 +555,7 @@ public class Script{
 	}
 
 
-	private static class Variable implements Operation {
+	private class Variable implements Operation {
 		String name;
 
 		public Variable(String name) {
@@ -594,7 +577,7 @@ public class Script{
 		}
 	}
 
-	private static class Assign extends BinaryOperator {
+	private class Assign extends BinaryOperator {
 		public String eval() throws ScriptParseException {
 			super.eval();
 
@@ -608,7 +591,7 @@ public class Script{
 		}
 	}
 
-	private static Operation tokenToOp(String input) throws ScriptParseException {
+	private Operation tokenToOp(String input) throws ScriptParseException {
 		  if (input.equals("+")) {
 			return new Add();
 		  } else if(input.equals("-")) {
@@ -918,43 +901,45 @@ public class Script{
 
 
 
-	private static Command getCommand(ScriptScanner sr) throws ScriptParseException {
-		String token = sr.getToken();
+	private Command getCommand() throws ScriptParseException {
+		String token = scanner.getToken();
 		if (token == null) {
 		  return null;
 		}
 
 		if (token.equals("while")) {
-		  return While.parse(sr);
+		  return new While();
 		}
 		if (token.equals("var")) {
-		  return Var.parse(sr);
+		  return new Var();
 		}
 		if (token.equals("if")) {
-		  return If.parse(sr);
+		  return new If();
 		}
 		if (token.equals("print")) {
-		  return Print.parse(sr);
+		  return new Print();
 		}
 		if (token.equals("{")) {
-		sr.pushBack(token);
-		return CommandBlock.parse(sr);
+		scanner.pushBack(token);
+		return new CommandBlock();
 		}
 
 		//System.out.println("Pushing back token '" + token + "'");
-		sr.pushBack(token);
-		return Expression.parse(sr);
+		scanner.pushBack(token);
+		return new Expression();
 	}
 
   public static void main(String args[]) {
 	StringBuffer result = new StringBuffer();
 	try{
-		ScriptScanner sr = 
-                      new ScriptScanner(new InputStreamReader(System.in));
+//		ScriptScanner sr = 
+//                      new ScriptScanner(new InputStreamReader(System.in));
+
+		Script s = new Script(new InputStreamReader(System.in));
  
  
 		Command cmd = null;
-		while((cmd = getCommand(sr))!=null){
+		while((cmd = s.getCommand())!=null){
 			try {
 				result.append(cmd.exec());
 			} catch(ScriptParseException e) {
