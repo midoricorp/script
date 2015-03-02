@@ -213,6 +213,8 @@ public class Script{
 		Operation op;
 		Command cmd;
 
+		private int totalCalls = 0;
+
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			int counter = 0;
@@ -220,8 +222,12 @@ public class Script{
 				if(loopLimit > 0 && counter > loopLimit) {
 					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter);
 				}
+				if(loopLimit > 0 && totalCalls > loopLimit*loopLimit) {
+					throw new ScriptParseException("While: nested loop count exceeded. Limit=" + (loopLimit*loopLimit) + " Current=" + totalCalls);
+				}
 				sb.append(cmd.exec());
 				counter++;
+				totalCalls++;
 			}
 			return sb.toString();
 		}
