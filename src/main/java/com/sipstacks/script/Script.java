@@ -14,6 +14,7 @@ public class Script{
   
 
 	Hashtable <String, String> symbolTable = new Hashtable<String,String>();
+	Hashtable <String, Function> functionTable = new Hashtable<String,Function>();
 	ScriptScanner scanner;
 	Random random;
 
@@ -30,17 +31,12 @@ public class Script{
 		this.loopLimit = limit;
 	}
 
-
-	private interface Command {
-		public String exec() throws ScriptParseException;
-
-	}
-
-
-
 	private class Expression implements Command {
 		Operation op;
 
+		public String exec(String arg) throws ScriptParseException {
+			return exec();
+		}
 		public String exec() throws ScriptParseException {
 			// allow expression to be just a ;
 			if (op != null) {
@@ -78,6 +74,9 @@ public class Script{
 		String name;
 		Operation op;
 
+		public String exec(String arg) throws ScriptParseException {
+			return exec();
+		}
 		public String exec() throws ScriptParseException {
 			if (op == null) {
 				symbolTable.put(name, "0");
@@ -140,6 +139,9 @@ public class Script{
 		Command cmd;
 		Command else_cmd;
 
+		public String exec(String arg) throws ScriptParseException {
+			return exec();
+		}
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			if (Integer.parseInt(op.eval()) != 0) {
@@ -215,6 +217,9 @@ public class Script{
 
 		private int totalCalls = 0;
 
+		public String exec(String arg) throws ScriptParseException {
+			return exec();
+		}
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			int counter = 0;
@@ -281,6 +286,9 @@ public class Script{
 		ArrayList<Command> commands;
 
 
+		public String exec(String arg) throws ScriptParseException {
+			return exec();
+		}
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			for (Command cmd : commands) {
@@ -322,6 +330,9 @@ public class Script{
 	private class Print implements Command {
 		Operation op;
 
+		public String exec(String arg) throws ScriptParseException {
+			return exec();
+		}
 		public String exec() throws ScriptParseException {
 			if (op != null) {
 				return op.eval() + "\n";
@@ -357,10 +368,6 @@ public class Script{
 		}
 	}
 
-	private interface Operation {
-		public String eval() throws ScriptParseException;
-	}
-
 	private class LParen implements Operation {
 		Operation inner;
 		public String eval() throws ScriptParseException {
@@ -388,20 +395,6 @@ public class Script{
 				throw new ScriptParseException(this.getClass().getName() + ": Missing left arg");
 			}
 
-			if (right == null) {
-				throw new ScriptParseException(this.getClass().getName() +": Missing right arg");
-			}
-
-			// must override to have proper return val
-			return null;
-		}
-
-	}
-
-	private static abstract class UnaryOperator implements Operation {
-		Operation right;
-
-		public String eval() throws ScriptParseException {
 			if (right == null) {
 				throw new ScriptParseException(this.getClass().getName() +": Missing right arg");
 			}
@@ -641,6 +634,12 @@ public class Script{
 		  } else if ( input.matches("^[0-9]+")) {
 			return new Number(input);
 		  } else if ( input.matches("^[a-zA-Z][a-zA-Z0-9]*$")) {
+			  // function names have precedents over variables
+			  if (functionTable.containsKey(input)) {
+				  Function f = functionTable.get(input);
+			
+				  return f.clone();
+			  }
 			return new Variable(input);
 		  }
 
@@ -664,7 +663,7 @@ public class Script{
 
 		Class classes[] = {
 			Increment.class, Decrement.class, // postfix
-			Not.class, //unary
+			Not.class, Function.class, //unary
 			Multiply.class, Divide.class, Modulo.class,  // multiplicative
 			Add.class, Subtract.class, Concat.class, // additive
 			LessThan.class, GreaterThan.class, // relational
@@ -776,6 +775,12 @@ public class Script{
 		//System.out.println("Pushing back token '" + token + "'");
 		scanner.pushBack(token);
 		return new Expression();
+	}
+
+	public void addExternalFunction(String name, ExternalFunction func) {
+		Function f = new Function();
+		f.func= func;
+		functionTable.put(name,f);
 	}
 
 

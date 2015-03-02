@@ -41,10 +41,6 @@ class ScriptScanner {
 
 		try {
 			while ((input = pr.read()) != -1) {
-				// end of stream
-				if (input == -1) {
-					break;
-				}
 
 				char c = (char)input;
 
@@ -61,6 +57,28 @@ class ScriptScanner {
 				skipWhiteSpace = false;
 
 				if (inQuotes && c != '\"') {
+					if(c == '\\') {
+						input  = pr.read();
+						// end of stream
+						if (input == -1) {
+							break;
+						}
+						c = (char)input;
+
+						if (c == '\\') {
+							sb.append('\\');
+						} else if (c == '\"') {
+							sb.append('\"');
+						} else if (c == 'n') {
+							sb.append('\n');
+						} else if (c == '\t') {
+							sb.append('\t');
+						} else {
+							throw new ScriptParseException("Unrecognized excape \\" + c, this);
+						}
+						continue;
+
+					}
 					sb.append(c);
 					continue;
 				} else if (inQuotes) {
@@ -153,7 +171,7 @@ class ScriptScanner {
 				}
 			}
 		} catch (IOException io) {
-			throw new ScriptParseException("IOException on parsing");
+			throw new ScriptParseException("IOException on parsing", this);
 		}
 
 
