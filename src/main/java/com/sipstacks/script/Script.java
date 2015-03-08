@@ -9,6 +9,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Stack;
 import java.util.Random;
+import org.json.simple.*;
 
 public class Script{
   
@@ -21,10 +22,10 @@ public class Script{
 	int loopLimit;
 
 	public Script(Reader in) {
-		Hashtable <String, String> symbolTable = new Hashtable<String,String>();
 		scanner = new ScriptScanner(in);
 		random = new Random();
 		loopLimit = -1; // default no limit
+		addExternalFunction("get", new GetFunction());
 	}
 
 	public void setLoopLimit(int limit) {
@@ -522,6 +523,17 @@ public class Script{
 		}
 	}
 
+	private class Reference extends BinaryOperator {
+		public String eval() throws ScriptParseException {
+			super.eval();
+			Object obj=JSONValue.parse(left.eval());
+			if ( obj instanceof JSONObject) {
+				return ((JSONObject)obj).get(right.eval()).toString();
+			}
+			throw new ScriptParseException("-> expected map as lval");
+		}
+	}
+
 	private class Number implements Operation {
 		String number;
 		
@@ -615,6 +627,8 @@ public class Script{
 			return new Assign();
 		  } else if(input.equals("==")) {
 			return new Equals();
+		  } else if(input.equals("->")) {
+			return new Reference();
 		  } else if(input.equals("!=")) {
 			return new NotEquals();
 		  } else if(input.equals(">")) {
@@ -668,6 +682,7 @@ public class Script{
 			Add.class, Subtract.class, Concat.class, // additive
 			LessThan.class, GreaterThan.class, // relational
 	       		Equals.class, NotEquals.class, // equality
+			Reference.class,	// object operators
 			Assign.class  // assignment 
 		};
 
