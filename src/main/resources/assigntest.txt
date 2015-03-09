@@ -1,0 +1,5 @@
+var x = 4;
+var y = 4;
+x = y = 6;
+
+print "Expect " . x . "=6 and " . y . "=6";

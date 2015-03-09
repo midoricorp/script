@@ -1,0 +1,2 @@
+var response = get("http://api.urbandictionary.com/v0/define?term=midori");
+print (response->"list")[0]->"definition";

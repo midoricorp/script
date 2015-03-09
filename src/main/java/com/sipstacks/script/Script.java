@@ -387,6 +387,23 @@ public class Script{
 		}
 	}
 
+	private class LBracket extends BinaryOperator  {
+		public String eval() throws ScriptParseException {
+			super.eval();
+			Object obj=JSONValue.parse(left.eval());
+			if ( obj instanceof JSONArray) {
+				return ((JSONArray)obj).get(Integer.parseInt(right.eval())).toString();
+			}
+			throw new ScriptParseException("[] expected array as lval\nGot: " + left.eval());
+		}
+	}
+
+	private class RBracket implements Operation {
+		public String eval() throws ScriptParseException {
+			throw new ScriptParseException("Trying to eval a ]. This shouldn't happen");
+		}
+	}
+
 	private static abstract class BinaryOperator implements Operation {
 		Operation left;
 		Operation right;
@@ -528,7 +545,8 @@ public class Script{
 			super.eval();
 			Object obj=JSONValue.parse(left.eval());
 			if ( obj instanceof JSONObject) {
-				return ((JSONObject)obj).get(right.eval()).toString();
+				String result = ((JSONObject)obj).get(right.eval()).toString();
+				return result;
 			}
 			throw new ScriptParseException("-> expected map as lval");
 		}
@@ -597,7 +615,7 @@ public class Script{
 			super.eval();
 
 			if (!(left instanceof Variable)) {
-				throw new ScriptParseException("Assign: attempting to assign value to non-variable type");
+				throw new ScriptParseException("Assign: attempting to assign value to non-variable type " + left.getClass().getName());
 			}
 			Variable var = (Variable)left;
 			String v = right.eval();
@@ -641,6 +659,10 @@ public class Script{
 			return new LParen();
 		  } else if(input.equals(")")) {
 			return new RParen();
+		  } else if(input.equals("[")) {
+			return new LBracket();
+		  } else if(input.equals("]")) {
+			return new RBracket();
 		  } else if(input.equals("rand")) {
 		  	return new Rand();
 		  } else if(input.startsWith("\"")) {
@@ -661,10 +683,10 @@ public class Script{
 	}
 	
 	private static Operation getOperation(List<Operation> ops) throws ScriptParseException {
-		return getOperation(ops,0);
+		return getOperation(ops,0,null);
 	}
 
-	private static Operation getOperation(List<Operation> ops, int start) throws ScriptParseException {
+	private static Operation getOperation(List<Operation> ops, int start, Class terminator) throws ScriptParseException {
 
 		// sanity check
 
@@ -676,13 +698,13 @@ public class Script{
 		// order based on http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
 
 		Class classes[] = {
+			LBracket.class, Reference.class,	// object operators
 			Increment.class, Decrement.class, // postfix
 			Not.class, Function.class, //unary
 			Multiply.class, Divide.class, Modulo.class,  // multiplicative
 			Add.class, Subtract.class, Concat.class, // additive
 			LessThan.class, GreaterThan.class, // relational
 	       		Equals.class, NotEquals.class, // equality
-			Reference.class,	// object operators
 			Assign.class  // assignment 
 		};
 
@@ -691,19 +713,35 @@ public class Script{
 			for (int i = ops.size()-1; i >= 0; i--) {
 				Operation command = ops.get(i);
 				if (command instanceof LParen) {
-					((LParen)command).inner = getOperation(ops,i+1);
+					((LParen)command).inner = getOperation(ops,i+1,RParen.class);
+					ops.remove(i+1);
+				}
+				if (command instanceof LBracket) {
+					((LBracket)command).right= getOperation(ops,i+1,RBracket.class);
 					ops.remove(i+1);
 				}
 			}
 		}
 
 		for (Class clazz : classes) {
-			for (int i = start; i < ops.size(); i++) {
+			int end_pos = ops.size();
+			// if terminator defind, we have terminator as endpos
+			if (terminator != null) {
+				for (int i = ops.size()-1; i >= start; i--) {
+					Operation command = ops.get(i);
+					if(terminator.isInstance(command)) {
+						end_pos = i;
+					}
+				}
+			}
+
+			for (int i = end_pos-1; i >= start; i--) {
 				Operation command = ops.get(i);
+
 
 				// if start != 0 we are in a (), stop at the )
 
-				if (start > 0 && command instanceof RParen) {
+				if (start > 0 && terminator.isInstance(command)) {
 					break;
 				}
 
@@ -712,6 +750,12 @@ public class Script{
 						UnaryOperator op = (UnaryOperator)command;
 						op.right = ops.get(i+1);
 						ops.remove(i+1);
+					} else if (LBracket.class.isAssignableFrom(command.getClass())) {
+						// works like binary operator but we handle [] like ()
+						BinaryOperator op = (BinaryOperator)command;
+						op.left = ops.get(i-1);
+						ops.remove(i-1);
+						i--;
 					} else if (PostfixOperator.class.isAssignableFrom(command.getClass())) {
 						PostfixOperator op = (PostfixOperator)command;
 						op.left = ops.get(i-1);
@@ -731,15 +775,23 @@ public class Script{
 
 		if (start > 0) {
 			if(ops.size() > (start + 1)) {
-				if (ops.get(start+1) instanceof RParen) {
+				if (terminator.isInstance(ops.get(start+1))) {
 					ops.remove(start+1);
 					return ops.get(start);
 				}
 			}
 
 			String list = "";
-			for (Operation op : ops.subList(start, ops.size())) {
-				list += " " + op.getClass().getName();
+			if(start < ops.size()) {
+				for (Operation op : ops.subList(start, ops.size())) {
+					list += " " + op.getClass().getName();
+				}
+			}
+			else {
+				list += " Full List: "; 
+				for (Operation op : ops) {
+					list += " " + op.getClass().getName();
+				}
 			}
 			throw new ScriptParseException("Ops: incomplete reduction in () processing start=" + start + " ops.size=" +(ops.size()-start) + "(" + list + ")");
 

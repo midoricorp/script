@@ -129,6 +129,9 @@ class ScriptScanner {
 							if (c2 == '>') {
 								sb.append(c2);
 							}
+							else if (c2 == '-') {
+								sb.append(c2);
+							}
 							else {
 								// not a double char
 								pr.unread(input);
@@ -150,7 +153,7 @@ class ScriptScanner {
 						|| c == '+' || c == '*' 
 						|| c == '/' || c == '%' || c == '='
 						|| c == ';' || c == '<' || c == '>' 
-						|| c == '.' ) {
+						|| c == '.' || c == '[' || c == ']' ) {
 					// no previous token so return the special char
 					if (sb.length() == 0) {
 						sb.append(c);
