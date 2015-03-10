@@ -1,0 +1,20 @@
+var radius = 15;
+var lineno=0;
+print "";
+while(lineno < radius*2+1) {
+        var line = "";
+        var x = 0;
+        while(x < radius*2+1) {
+                var ycoord = lineno-radius;
+                var xcoord = x-radius;
+                if(xcoord*xcoord + ycoord*ycoord > radius*radius) {
+                        line = line . "~";
+                } else {
+                        line = line . "*";
+                }
+                x++;
+        }
+        print line;
+
+        lineno++;
+}
