@@ -686,6 +686,59 @@ public class Script{
 		return getOperation(ops,0,null);
 	}
 
+	private static class OperationSet
+	{
+		boolean leftToRight; 
+		ArrayList<Class> operators;
+		public OperationSet(boolean leftToRight) {
+			this.leftToRight = leftToRight;
+			this.operators = new ArrayList<Class>();
+		}
+	}
+
+	static ArrayList<OperationSet>classes = new ArrayList<OperationSet>();
+
+	static {
+		OperationSet op = new OperationSet(true);
+		op.operators.add(Reference.class);
+		op.operators.add(LBracket.class);
+		op.operators.add(Function.class);
+		classes.add(op);
+
+		op = new OperationSet(false);
+		op.operators.add(Increment.class);
+		op.operators.add(Decrement.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(Multiply.class);
+		op.operators.add(Divide.class);
+		op.operators.add(Modulo.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(Add.class);
+		op.operators.add(Subtract.class);
+		op.operators.add(Concat.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(LessThan.class);
+		op.operators.add(GreaterThan.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(Equals.class);
+		op.operators.add(NotEquals.class);
+		classes.add(op);
+
+		op = new OperationSet(false);
+		op.operators.add(Assign.class);
+		classes.add(op);
+
+
+	}
+
 	private static Operation getOperation(List<Operation> ops, int start, Class terminator) throws ScriptParseException {
 
 		// sanity check
@@ -694,20 +747,6 @@ public class Script{
 			return null;
 		}
 		
-		// assignment order ! * / % + - . < > == != =
-		// order based on http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
-
-		Class classes[] = {
-			LBracket.class, Reference.class,	// object operators
-			Increment.class, Decrement.class, // postfix
-			Not.class, Function.class, //unary
-			Multiply.class, Divide.class, Modulo.class,  // multiplicative
-			Add.class, Subtract.class, Concat.class, // additive
-			LessThan.class, GreaterThan.class, // relational
-	       		Equals.class, NotEquals.class, // equality
-			Assign.class  // assignment 
-		};
-
 		// work your way backwards, only have the non-recursive part eval ()
 		if(start == 0) {
 			for (int i = ops.size()-1; i >= 0; i--) {
@@ -723,19 +762,38 @@ public class Script{
 			}
 		}
 
-		for (Class clazz : classes) {
-			int end_pos = ops.size();
+		for (OperationSet opset: classes) {
 			// if terminator defind, we have terminator as endpos
-			if (terminator != null) {
+
+			int startPos;
+
+			if (opset.leftToRight) {
+				startPos=start;
+			}
+			else if (terminator != null) {
+				startPos = ops.size()-1;
 				for (int i = ops.size()-1; i >= start; i--) {
 					Operation command = ops.get(i);
 					if(terminator.isInstance(command)) {
-						end_pos = i;
+						startPos = i;
 					}
 				}
+			} else {
+				startPos = ops.size()-1;
 			}
 
-			for (int i = end_pos-1; i >= start; i--) {
+
+			int i = startPos;
+			for (; ;) {
+				if (opset.leftToRight) {
+					if (i>=ops.size()) {
+						break;
+					}
+				} else {
+					if (i < start) {
+						break;
+					}
+				}
 				Operation command = ops.get(i);
 
 
@@ -745,31 +803,34 @@ public class Script{
 					break;
 				}
 
-				if ( clazz.isInstance(command) ) {
-					if (UnaryOperator.class.isAssignableFrom(command.getClass())) {
-						UnaryOperator op = (UnaryOperator)command;
-						op.right = ops.get(i+1);
-						ops.remove(i+1);
-					} else if (LBracket.class.isAssignableFrom(command.getClass())) {
-						// works like binary operator but we handle [] like ()
-						BinaryOperator op = (BinaryOperator)command;
-						op.left = ops.get(i-1);
-						ops.remove(i-1);
-						i--;
-					} else if (PostfixOperator.class.isAssignableFrom(command.getClass())) {
-						PostfixOperator op = (PostfixOperator)command;
-						op.left = ops.get(i-1);
-						ops.remove(i-1);
-						i--;
-					} else if (BinaryOperator.class.isAssignableFrom(command.getClass())) {
-						BinaryOperator op = (BinaryOperator)command;
-						op.left = ops.get(i-1);
-						op.right = ops.get(i+1);
-						ops.remove(i+1);
-						ops.remove(i-1);
-						i--;
+				for (Class clazz : opset.operators) {
+					if ( clazz.isInstance(command) ) {
+						if (UnaryOperator.class.isAssignableFrom(command.getClass())) {
+							UnaryOperator op = (UnaryOperator)command;
+							op.right = ops.get(i+1);
+							ops.remove(i+1);
+						} else if (LBracket.class.isAssignableFrom(command.getClass())) {
+							// works like binary operator but we handle [] like ()
+							BinaryOperator op = (BinaryOperator)command;
+							op.left = ops.get(i-1);
+							ops.remove(i-1);
+							i--;
+						} else if (PostfixOperator.class.isAssignableFrom(command.getClass())) {
+							PostfixOperator op = (PostfixOperator)command;
+							op.left = ops.get(i-1);
+							ops.remove(i-1);
+							i--;
+						} else if (BinaryOperator.class.isAssignableFrom(command.getClass())) {
+							BinaryOperator op = (BinaryOperator)command;
+							op.left = ops.get(i-1);
+							op.right = ops.get(i+1);
+							ops.remove(i+1);
+							ops.remove(i-1);
+							i--;
+						}
 					}
 				}
+				i=opset.leftToRight?i+1:i-1;
 			}
 		}
 
