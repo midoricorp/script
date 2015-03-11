@@ -390,11 +390,43 @@ public class Script{
 	private class LBracket extends BinaryOperator  {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			Object obj=JSONValue.parse(left.eval().toString());
-			if ( obj instanceof JSONArray) {
-				return ((JSONArray)obj).get(Integer.parseInt(right.eval().toString())).toString();
-			}
-			throw new ScriptParseException("[] expected array as lval\nGot: " + left.eval().toString());
+			return new Assignable() {
+				int index;
+				JSONArray arr;
+				Object leval;
+
+				Object init(Object leval, int index) throws ScriptParseException {
+					Object obj=JSONValue.parse(leval.toString());
+					if ( obj instanceof JSONArray) {
+						this.arr = (JSONArray)obj;
+					}
+					else {
+						throw new ScriptParseException("[] expected array as lval\nGot: " + left.eval().toString());
+					}
+
+					if ( index >= arr.size()) {
+						throw new ScriptParseException("[] index " + index + " is out of bounds of defined array of size " + arr.size());
+					}
+					this.leval = leval;
+					this.index = index;
+					return this;
+				}
+
+				public String toString() {
+					return arr.get(index).toString();
+				}
+
+				public void assign(String value) throws ScriptParseException {
+					arr.set(index,value);
+					if (leval instanceof Assignable) {
+						((Assignable)leval).assign(arr.toString());
+					} else {
+						throw new ScriptParseException("[] trying to assign value to non assigable lparam " + leval.getClass().getName());
+					}
+					
+				}
+
+			}.init(left.eval(),Integer.parseInt(right.eval().toString()));
 		}
 	}
 
@@ -431,7 +463,7 @@ public class Script{
 				throw new ScriptParseException(this.getClass().getName() +": Missing left arg");
 			}
 
-			if (!(left instanceof Variable)) {
+			if (!(left instanceof Assignable)) {
 				throw new ScriptParseException(this.getClass().getName() +": attempting to assign value to non-variable type");
 			}
 
@@ -445,9 +477,9 @@ public class Script{
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
-			Variable var = (Variable)left;
+			Assignable ass = (Assignable)left;
 			int v = Integer.parseInt(left.eval().toString());
-			var.assign(Integer.toString(v+1));
+			ass.assign(Integer.toString(v+1));
 			return Integer.toString(v);
 		}
 	}	
@@ -456,9 +488,9 @@ public class Script{
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
-			Variable var = (Variable)left;
+			Assignable ass = (Assignable)left;
 			int v = Integer.parseInt(left.eval().toString());
-			var.assign(Integer.toString(v-1));
+			ass.assign(Integer.toString(v-1));
 			return Integer.toString(v);
 		}
 	}	
@@ -543,12 +575,45 @@ public class Script{
 	private class Reference extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			Object obj=JSONValue.parse(left.eval().toString());
-			if ( obj instanceof JSONObject) {
-				String result = ((JSONObject)obj).get(right.eval().toString()).toString();
-				return result;
-			}
-			throw new ScriptParseException("-> expected map as lval");
+			return new Assignable() {
+				String key;
+				JSONObject map;
+				Object leval;
+
+				Object init(Object leval, String key) throws ScriptParseException {
+					Object obj=JSONValue.parse(leval.toString());
+					if ( obj instanceof JSONObject) {
+						this.map= (JSONObject)obj;
+					}
+					else {
+						throw new ScriptParseException("-> expected map as lval\nGot: " + left.eval().toString());
+					}
+
+					this.leval = leval;
+					this.key = key;
+					return this;
+				}
+
+				public String toString() {
+					Object obj = map.get(key);
+					if(obj == null) {
+						return "";
+					} else {
+						return obj.toString();
+					}
+				}
+
+				public void assign(String value) throws ScriptParseException {
+					map.put(key,value);
+					if (leval instanceof Assignable) {
+						((Assignable)leval).assign(map.toString());
+					} else {
+						throw new ScriptParseException("-> trying to assign value to non assigable lparam " + leval.getClass().getName());
+					}
+					
+				}
+
+			}.init(left.eval(),right.eval().toString());
 		}
 	}
 
@@ -588,7 +653,7 @@ public class Script{
 	}
 
 
-	private class Variable implements Operation {
+	private class Variable implements Operation, Assignable {
 		String name;
 
 		public Variable(String name) {
@@ -599,7 +664,10 @@ public class Script{
 			if (symbolTable.get(name) == null) {
 				throw new ScriptParseException("Undefined variable: " + name);
 			}
-			return symbolTable.get(name);
+			return this;
+		}
+		public String toString() {
+			return symbolTable.get(name).toString();
 		}
 
 		public void assign(String value) throws ScriptParseException {
@@ -614,12 +682,14 @@ public class Script{
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
-			if (!(left instanceof Variable)) {
-				throw new ScriptParseException("Assign: attempting to assign value to non-variable type " + left.getClass().getName());
+			Object larg = left.eval();
+
+			if (!(larg instanceof Assignable)) {
+				throw new ScriptParseException("Assign: attempting to assign value to non-assignable type " + larg.getClass().getName());
 			}
-			Variable var = (Variable)left;
+			Assignable ass = (Assignable)larg;
 			String v = right.eval().toString();
-			var.assign(v);
+			ass.assign(v);
 			return v;
 		}
 	}
