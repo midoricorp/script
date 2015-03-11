@@ -1,0 +1,12 @@
+var arr = "[1,2,3]";
+print "Expect 2 Got " . arr[1];
+arr[1]=6;
+print "Expect [1,\"6\",3] Got " . arr;
+
+var map = "{\"kitten\" : \"nyan\"}";
+print "Expect nyan Got " . map->"kitten";
+map->"kitten" = "black";
+print "Expect {\"kitten\" : \"black\"} Got " . map;
+map->"cat" = "white";
+print "Expect {\"kitten\" : \"black\", \"cat\" : \"white\"} Got " . map;
+print "Expect white Got " . map->"cat";
