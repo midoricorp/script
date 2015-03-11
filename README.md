@@ -16,8 +16,8 @@ src/main/resources/
 
 ###Operators (In order of Precedence)
 * (*expression*) - evaluate *expression* first, changes order of operations
-* ->  - get element from a JSON Map
-* [*expression*] - get index specified by *expression*
+* ->  - get element from a JSON Map - can also be on the left side of an assign to modify the JSON map
+* [*expression*] - get index from JSON array specified by *expression* - can also be on the left side of an assign to modify the JSON array
 * function *param* - all functions take one parameter, if *param* is an expression it should be surrounded by ()
 * ++ - Post Increment
 * -- - Post Decrement
