@@ -146,12 +146,41 @@ class ScriptScanner {
 					return sb.toString();
 				}
 
+				// =, ==, and =~ 
+
+				if (c == '=') {
+					// no previous token so return the special char
+					if (sb.length() == 0) {
+						sb.append(c);
+						if ((input = pr.read()) != -1) {
+							char c2 = (char)input;
+							if (c2 == '=') {
+								sb.append(c2);
+							}
+							else if (c2 == '~') {
+								sb.append(c2);
+							}
+							else {
+								// not a double char
+								pr.unread(input);
+							}
+						 }
+						 return sb.toString();
+					}
+
+					// we still have a token that needs to be returned
+					// pushback and return that
+					pr.unread(input);
+					return sb.toString();
+				}
+
+
 
 				// control chars end previous token & start a new one
 
 				if (c == '(' || c == ')' || c == '{' || c == '}'
 						|| c == '+' || c == '*' 
-						|| c == '/' || c == '%' || c == '='
+						|| c == '/' || c == '%' 
 						|| c == ';' || c == '<' || c == '>' 
 						|| c == '.' || c == '[' || c == ']' ) {
 					// no previous token so return the special char

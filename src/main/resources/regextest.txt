@@ -1,0 +1,11 @@
+print "Expect 1 " . "BOB" =~ "/bob/i";
+print "Expect 0 " . "BOB" =~ "/bob/";
+print "Expect 0 " . "BOB" =~ "bob";
+print "Expect 1 " . "BOB" =~ "BOB";
+
+
+print "Expect 'Mary had a little goat' " . "Mary had a little lamb" =~ "/lamb/goat/";
+
+var string = "Mary had a little lamb";
+string =~ "/lamb/goat/";
+print "Expect 'Mary had a little goat' " . string;

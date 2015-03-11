@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Stack;
 import java.util.Random;
 import org.json.simple.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class Script{
   
@@ -495,6 +497,55 @@ public class Script{
 		}
 	}	
 
+	private class BindingOperator extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+
+			String rval = right.eval().toString();
+
+			if (rval.contains("/")) {
+				// add a bogus option to ensure correct splitting
+				rval += "_"; 
+			}
+
+			String [] args = rval.split("/");
+
+			if (args.length == 1) {
+				// simple string match
+				boolean res = left.eval().toString().contains(args[0]);
+				return res?"1":"0";
+			} else if(args.length == 3 ) {
+				// regex match in the form of /regex/opts
+				int flags = 0;
+				if(args[2].contains("i")) {
+					flags |= Pattern.CASE_INSENSITIVE;
+				}
+				if(args[2].contains("s")) {
+					flags |= Pattern.DOTALL;
+				}
+				if(args[2].contains("m")) {
+					flags |= Pattern.MULTILINE;
+				}
+
+				Pattern p = Pattern.compile(args[1],flags);
+				return p.matcher(left.eval().toString()).matches()?"1":"0";
+			} else if(args.length == 4) {
+				// substitution s/src/dst/opts
+				Object lval = left.eval();
+
+				String result = lval.toString().replaceAll(args[1], args[2]);
+
+				if (lval instanceof Assignable) {
+					Assignable ass = (Assignable)lval;
+					ass.assign(result);
+				}
+
+				return result;
+			}
+			throw new ScriptParseException("=~ malformed regex " + rval);
+		}
+	}
+
 	private class Add extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
@@ -715,6 +766,8 @@ public class Script{
 			return new Assign();
 		  } else if(input.equals("==")) {
 			return new Equals();
+		  } else if(input.equals("=~")) {
+			return new BindingOperator();
 		  } else if(input.equals("->")) {
 			return new Reference();
 		  } else if(input.equals("!=")) {
@@ -778,6 +831,10 @@ public class Script{
 		op = new OperationSet(false);
 		op.operators.add(Increment.class);
 		op.operators.add(Decrement.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(BindingOperator.class);
 		classes.add(op);
 
 		op = new OperationSet(true);
