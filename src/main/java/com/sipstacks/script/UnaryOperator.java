@@ -3,7 +3,7 @@ package com.sipstacks.script;
 abstract class UnaryOperator implements Operation {
 	Operation right;
 
-	public String eval() throws ScriptParseException {
+	public Object eval() throws ScriptParseException {
 		if (right == null) {
 			throw new ScriptParseException(this.getClass().getName() +": Missing right arg");
 		}
