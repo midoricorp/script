@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 public class Script{
   
 
-	Hashtable <String, String> symbolTable = new Hashtable<String,String>();
+	Hashtable <String, Object> symbolTable = new Hashtable<String,Object>();
 	Hashtable <String, Function> functionTable = new Hashtable<String,Function>();
 	ScriptScanner scanner;
 	Random random;
@@ -82,9 +82,9 @@ public class Script{
 		}
 		public String exec() throws ScriptParseException {
 			if (op == null) {
-				symbolTable.put(name, "0");
+				symbolTable.put(name, "");
 			} else {
-				symbolTable.put(name, op.eval().toString());
+				symbolTable.put(name, op.eval());
 			}
 			return "";
 		}
@@ -228,7 +228,7 @@ public class Script{
 			int counter = 0;
 			while (Integer.parseInt(op.eval().toString()) != 0) {
 				if(loopLimit > 0 && counter > loopLimit) {
-					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter);
+					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter + " Condition=" + op.eval());
 				}
 				if(loopLimit > 0 && totalCalls > loopLimit*loopLimit) {
 					throw new ScriptParseException("While: nested loop count exceeded. Limit=" + (loopLimit*loopLimit) + " Current=" + totalCalls);
@@ -418,10 +418,10 @@ public class Script{
 					return arr.get(index).toString();
 				}
 
-				public void assign(String value) throws ScriptParseException {
+				public void assign(Object value) throws ScriptParseException {
 					arr.set(index,value);
 					if (leval instanceof Assignable) {
-						((Assignable)leval).assign(arr.toString());
+						((Assignable)leval).assign(arr);
 					} else {
 						throw new ScriptParseException("[] trying to assign value to non assigable lparam " + leval.getClass().getName());
 					}
@@ -481,8 +481,9 @@ public class Script{
 
 			Assignable ass = (Assignable)left;
 			int v = Integer.parseInt(left.eval().toString());
-			ass.assign(Integer.toString(v+1));
-			return Integer.toString(v);
+			Integer result = Integer.valueOf(v+1);
+			ass.assign(result);
+			return Integer.valueOf(v);
 		}
 	}	
 
@@ -492,8 +493,9 @@ public class Script{
 
 			Assignable ass = (Assignable)left;
 			int v = Integer.parseInt(left.eval().toString());
-			ass.assign(Integer.toString(v-1));
-			return Integer.toString(v);
+			Integer result = Integer.valueOf(v-1);
+			ass.assign(result);
+			return Integer.valueOf(v);
 		}
 	}	
 
@@ -549,70 +551,70 @@ public class Script{
 	private class Add extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.toString(Integer.parseInt(left.eval().toString()) + Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) + Integer.parseInt(right.eval().toString()));
 		}
 	}
 
 	private class Subtract extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.toString(Integer.parseInt(left.eval().toString()) - Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) - Integer.parseInt(right.eval().toString()));
 		}
 	}
 
 	private class Multiply extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.toString(Integer.parseInt(left.eval().toString()) * Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) * Integer.parseInt(right.eval().toString()));
 		}
 	}
 
 	private class Divide extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.toString(Integer.parseInt(left.eval().toString()) / Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) / Integer.parseInt(right.eval().toString()));
 		}
 	}
 
 	private class Modulo extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.toString(Integer.parseInt(left.eval().toString()) % Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) % Integer.parseInt(right.eval().toString()));
 		}
 	}
 
 	private class GreaterThan extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(left.eval().toString()) > Integer.parseInt(right.eval().toString())?"1":"0";
+			return Integer.parseInt(left.eval().toString()) > Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class LessThan extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(left.eval().toString()) < Integer.parseInt(right.eval().toString())?"1":"0";
+			return Integer.parseInt(left.eval().toString()) < Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class Equals extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return left.eval().toString().equals(right.eval().toString())?"1":"0";
+			return left.eval().toString().equals(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class NotEquals extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return left.eval().toString().equals(right.eval().toString())?"0":"1";
+			return left.eval().toString().equals(right.eval().toString())?Integer.valueOf("0"):Integer.valueOf("1");
 		}
 	}
 
 	private class Not extends UnaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(right.eval().toString()) == 0?"1":"0";
+			return Integer.parseInt(right.eval().toString()) == 0?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
@@ -654,10 +656,10 @@ public class Script{
 					}
 				}
 
-				public void assign(String value) throws ScriptParseException {
+				public void assign(Object value) throws ScriptParseException {
 					map.put(key,value);
 					if (leval instanceof Assignable) {
-						((Assignable)leval).assign(map.toString());
+						((Assignable)leval).assign(map);
 					} else {
 						throw new ScriptParseException("-> trying to assign value to non assigable lparam " + leval.getClass().getName());
 					}
@@ -669,10 +671,10 @@ public class Script{
 	}
 
 	private class Number implements Operation {
-		String number;
+		Integer number;
 		
 		public Number(String number) {
-			this.number = number;
+			this.number = Integer.valueOf(number);
 		}
 
 		public Object eval() throws ScriptParseException {
@@ -681,13 +683,13 @@ public class Script{
 	}
 
 	private class Rand implements Operation {
-		String number;
+		Integer number;
 		
 		public Rand() {
 		}
 
 		public Object eval() throws ScriptParseException {
-			return Integer.toString(random.nextInt(Integer.MAX_VALUE));
+			return new Integer(random.nextInt(Integer.MAX_VALUE));
 		}
 	}
 
@@ -721,7 +723,7 @@ public class Script{
 			return symbolTable.get(name).toString();
 		}
 
-		public void assign(String value) throws ScriptParseException {
+		public void assign(Object value) throws ScriptParseException {
 			if (symbolTable.get(name) == null) {
 				throw new ScriptParseException("Undefined variable: " + name);
 			}
@@ -739,7 +741,7 @@ public class Script{
 				throw new ScriptParseException("Assign: attempting to assign value to non-assignable type " + larg.getClass().getName());
 			}
 			Assignable ass = (Assignable)larg;
-			String v = right.eval().toString();
+			Object v = right.eval();
 			ass.assign(v);
 			return v;
 		}

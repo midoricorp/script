@@ -1,7 +1,7 @@
 var arr = "[1,2,3]";
 print "Expect 2 Got " . arr[1];
 arr[1]=6;
-print "Expect [1,\"6\",3] Got " . arr;
+print "Expect [1,6,3] Got " . arr;
 
 var map = "{\"kitten\" : \"nyan\"}";
 print "Expect nyan Got " . map->"kitten";
