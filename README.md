@@ -29,7 +29,9 @@ src/main/resources/
 * - - Subtract
 * . - String Concatenation
 * > - Greater Than
+* >= - Greater Than or Equals
 * < - Less Than
+* <= - Less Than or Equals
 * == - Equals
 * != - Not Equals
 * = - Assign

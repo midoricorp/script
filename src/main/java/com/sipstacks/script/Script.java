@@ -590,10 +590,24 @@ public class Script{
 		}
 	}
 
+	private class GreaterThanOrEquals extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			return Integer.parseInt(left.eval().toString()) >= Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+		}
+	}
+
 	private class LessThan extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.parseInt(left.eval().toString()) < Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+		}
+	}
+
+	private class LessThanOrEquals extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			return Integer.parseInt(left.eval().toString()) <= Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
@@ -776,8 +790,12 @@ public class Script{
 			return new NotEquals();
 		  } else if(input.equals(">")) {
 			return new GreaterThan();
+		  } else if(input.equals(">=")) {
+			return new GreaterThanOrEquals();
 		  } else if(input.equals("<")) {
 			return new LessThan();
+		  } else if(input.equals("<=")) {
+			return new LessThanOrEquals();
 		  } else if(input.equals("!")) {
 			return new Not();
 		  } else if(input.equals("(")) {
@@ -854,6 +872,8 @@ public class Script{
 		op = new OperationSet(true);
 		op.operators.add(LessThan.class);
 		op.operators.add(GreaterThan.class);
+		op.operators.add(LessThanOrEquals.class);
+		op.operators.add(GreaterThanOrEquals.class);
 		classes.add(op);
 
 		op = new OperationSet(true);
