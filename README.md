@@ -34,6 +34,10 @@ src/main/resources/
 * <= - Less Than or Equals
 * == - Equals
 * != - Not Equals
+* & - Bitwise And
+* | - Bitwise Or
+* && - Conditional And
+* || - Conditional Or
 * = - Assign
  
 ###Data Types

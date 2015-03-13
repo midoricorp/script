@@ -548,6 +548,20 @@ public class Script{
 		}
 	}
 
+	private class BitwiseAnd extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) & Integer.parseInt(right.eval().toString()));
+		}
+	}
+
+	private class BitwiseOr extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			return Integer.valueOf(Integer.parseInt(left.eval().toString()) | Integer.parseInt(right.eval().toString()));
+		}
+	}
+
 	private class Add extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
@@ -608,6 +622,22 @@ public class Script{
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.parseInt(left.eval().toString()) <= Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+		}
+	}
+
+	private class ConditionalAnd extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			boolean result = (Integer.parseInt(left.eval().toString()) != 0) && (Integer.parseInt(right.eval().toString()) != 0);
+			return result?Integer.valueOf("1"):Integer.valueOf("0");
+		}
+	}
+
+	private class ConditionalOr extends BinaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			boolean result = (Integer.parseInt(left.eval().toString()) != 0) || (Integer.parseInt(right.eval().toString()) != 0);
+			return result?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
@@ -796,6 +826,14 @@ public class Script{
 			return new LessThan();
 		  } else if(input.equals("<=")) {
 			return new LessThanOrEquals();
+		  } else if(input.equals("&&")) {
+			return new ConditionalAnd();
+		  } else if(input.equals("&")) {
+			return new BitwiseAnd();
+		  } else if(input.equals("||")) {
+			return new ConditionalOr();
+		  } else if(input.equals("|")) {
+			return new BitwiseOr();
 		  } else if(input.equals("!")) {
 			return new Not();
 		  } else if(input.equals("(")) {
@@ -879,6 +917,22 @@ public class Script{
 		op = new OperationSet(true);
 		op.operators.add(Equals.class);
 		op.operators.add(NotEquals.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(BitwiseAnd.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(BitwiseOr.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(ConditionalAnd.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(ConditionalOr.class);
 		classes.add(op);
 
 		op = new OperationSet(false);

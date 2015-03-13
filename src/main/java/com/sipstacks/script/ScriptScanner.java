@@ -204,7 +204,7 @@ class ScriptScanner {
 				// control chars end previous token & start a new one
 
 				if (c == '(' || c == ')' || c == '{' || c == '}'
-						|| c == '+' || c == '*' 
+						|| c == '+' || c == '*' || c == '&' || c == '|'
 						|| c == '/' || c == '%' || c == ';' 
 						|| c == '.' || c == '[' || c == ']' ) {
 					// no previous token so return the special char
@@ -212,7 +212,8 @@ class ScriptScanner {
 						sb.append(c);
 
 						// some control chars can be 2 chars long
-						if (c == '=' || c == '+' || c == '-') {
+						if (c == '=' || c == '+' || c == '-'
+								|| c == '&' || c == '|') {
 
 							if ((input = pr.read()) != -1) {
 								char c2 = (char)input;
