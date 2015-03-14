@@ -375,6 +375,9 @@ public class Script{
 		Operation inner;
 		public Object eval() throws ScriptParseException {
 			if (inner != null) {
+				if (inner instanceof Listable ) {
+					return ((Listable)inner).getList();
+				}
 				return inner.eval();
 			}
 
@@ -791,6 +794,39 @@ public class Script{
 		}
 	}
 
+	private class Comma extends BinaryOperator implements Listable {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+
+			// comma in scalar context evaluates larg but then discards it
+			Object larg = left.eval();
+
+			Object v = right.eval();
+			return v;
+		}
+
+		public List<Object> getList() throws ScriptParseException {
+			List<Object> array;
+			if (left instanceof Listable) {
+				array = ((Listable)left).getList();
+			} else {
+				Object obj = left.eval();
+				array = new JSONArray();
+				array.add(obj);
+			}
+
+			if (right instanceof Listable) {
+				for (Object obj : ((Listable)right).getList()) {
+					array.add(obj);
+				}
+			} else {
+				array.add(right.eval());
+			}
+			return array;
+
+		}
+	}
+
 	private Operation tokenToOp(String input) throws ScriptParseException {
 		  if (input.equals("+")) {
 			return new Add();
@@ -808,6 +844,8 @@ public class Script{
 			return new Modulo();
 		  } else if(input.equals(".")) {
 			return new Concat();
+		  } else if(input.equals(",")) {
+			return new Comma();
 		  } else if(input.equals("=")) {
 			return new Assign();
 		  } else if(input.equals("==")) {
@@ -937,6 +975,10 @@ public class Script{
 
 		op = new OperationSet(false);
 		op.operators.add(Assign.class);
+		classes.add(op);
+
+		op = new OperationSet(true);
+		op.operators.add(Comma.class);
 		classes.add(op);
 
 

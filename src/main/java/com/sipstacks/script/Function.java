@@ -5,6 +5,9 @@ class Function extends UnaryOperator implements Cloneable {
 
 	public Object eval() throws ScriptParseException {
 		super.eval();
+		if (right instanceof Listable) {
+			return func.exec(((Listable)right).getList().toString());
+		}
 		return func.exec(right.eval().toString());
 	}
 

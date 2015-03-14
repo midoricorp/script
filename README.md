@@ -39,6 +39,7 @@ src/main/resources/
 * && - Conditional And
 * || - Conditional Or
 * = - Assign
+* , - Comma operatior - can make lists or return right param depending on context
  
 ###Data Types
 All variables are stored as strings, and parsed as integers or JSON as required by operators.  Conditional operators consider "0" or "" to be false and everything else to be true

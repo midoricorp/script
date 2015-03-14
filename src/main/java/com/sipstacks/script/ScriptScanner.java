@@ -205,8 +205,8 @@ class ScriptScanner {
 
 				if (c == '(' || c == ')' || c == '{' || c == '}'
 						|| c == '+' || c == '*' || c == '&' || c == '|'
-						|| c == '/' || c == '%' || c == ';' 
-						|| c == '.' || c == '[' || c == ']' ) {
+						|| c == '/' || c == '%' || c == ';'  
+						|| c == ',' || c == '.' || c == '[' || c == ']' ) {
 					// no previous token so return the special char
 					if (sb.length() == 0) {
 						sb.append(c);
