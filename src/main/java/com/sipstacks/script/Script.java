@@ -37,7 +37,7 @@ public class Script{
 	private class Expression implements Command {
 		Operation op;
 
-		public String exec(String arg) throws ScriptParseException {
+		public String exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public String exec() throws ScriptParseException {
@@ -77,7 +77,7 @@ public class Script{
 		String name;
 		Operation op;
 
-		public String exec(String arg) throws ScriptParseException {
+		public String exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public String exec() throws ScriptParseException {
@@ -142,7 +142,7 @@ public class Script{
 		Command cmd;
 		Command else_cmd;
 
-		public String exec(String arg) throws ScriptParseException {
+		public String exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public String exec() throws ScriptParseException {
@@ -220,7 +220,7 @@ public class Script{
 
 		private int totalCalls = 0;
 
-		public String exec(String arg) throws ScriptParseException {
+		public String exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public String exec() throws ScriptParseException {
@@ -289,7 +289,7 @@ public class Script{
 		ArrayList<Command> commands;
 
 
-		public String exec(String arg) throws ScriptParseException {
+		public String exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public String exec() throws ScriptParseException {
@@ -333,7 +333,7 @@ public class Script{
 	private class Print implements Command {
 		Operation op;
 
-		public String exec(String arg) throws ScriptParseException {
+		public String exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public String exec() throws ScriptParseException {
@@ -752,6 +752,16 @@ public class Script{
 		}
 	}
 
+	private static class NoOP implements Operation, Listable {
+		public Object eval() throws ScriptParseException {
+			return "";
+		}
+
+		public List<Object> getList() {
+			return new JSONArray();
+		}
+	}
+
 
 	private class Variable implements Operation, Assignable {
 		String name;
@@ -1080,15 +1090,23 @@ public class Script{
 		}
 
 		if (start > 0) {
-			if(ops.size() > (start + 1)) {
+			if (ops.size() > (start + 1)) {
 				if (terminator.isInstance(ops.get(start+1))) {
 					ops.remove(start+1);
+					return ops.get(start);
+				}
+			} else if (ops.size() > (start)) {
+ 
+				// this is the case where terminator is right after the start
+				if (terminator.isInstance(ops.get(start))) {
+					ops.remove(start);
+					ops.add(start, new NoOP());
 					return ops.get(start);
 				}
 			}
 
 			String list = "";
-			if(start < ops.size()) {
+			if (start < ops.size()) {
 				for (Operation op : ops.subList(start, ops.size())) {
 					list += " " + op.getClass().getName();
 				}
