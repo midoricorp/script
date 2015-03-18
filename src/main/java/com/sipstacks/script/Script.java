@@ -6,6 +6,7 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Stack;
 import java.util.List;
 import java.util.Stack;
 import java.util.Random;
@@ -16,14 +17,23 @@ import java.util.regex.Matcher;
 public class Script{
   
 
-	Hashtable <String, Object> symbolTable = new Hashtable<String,Object>();
+	Stack<Hashtable <String, Object>> symbolTable = new Stack<Hashtable<String,Object>>();
 	Hashtable <String, Function> functionTable = new Hashtable<String,Function>();
 	ScriptScanner scanner;
 	Random random;
 
 	int loopLimit;
 
+	private void enterScope() {
+		symbolTable.push(new Hashtable<String,Object>());
+	}
+
+	private void exitScope() {
+		symbolTable.pop();
+	}
+
 	public Script(Reader in) {
+		enterScope();
 		scanner = new ScriptScanner(in);
 		random = new Random();
 		loopLimit = -1; // default no limit
@@ -82,9 +92,9 @@ public class Script{
 		}
 		public String exec() throws ScriptParseException {
 			if (op == null) {
-				symbolTable.put(name, "");
+				symbolTable.peek().put(name, "");
 			} else {
-				symbolTable.put(name, op.eval());
+				symbolTable.peek().put(name, op.eval());
 			}
 			return "";
 		}
@@ -135,6 +145,59 @@ public class Script{
 
 		  }
 
+	}
+
+	private class FunctionDeclare implements Command {
+		String func_name;
+		Command cmd;
+
+		public String exec(List<String> arg) throws ScriptParseException {
+			return exec();
+		}
+		public String exec() throws ScriptParseException {
+			Function f = new Function();
+			f.func = cmd;
+			functionTable.put(func_name,f);
+			return "";
+		}
+
+		public FunctionDeclare() throws ScriptParseException {
+
+
+			this.func_name = scanner.getToken();
+			this.cmd = new ScopedCommand(getCommand());
+			if (cmd == null) {
+				throw new ScriptParseException("sub: missing command", scanner);
+			}
+
+		}
+	}
+
+	private class ScopedCommand implements Command {
+
+		Command cmd;
+
+		public ScopedCommand(Command cmd) {
+			this.cmd = cmd;
+		}
+
+		public String exec(List<String> arg) throws ScriptParseException {
+			String result;
+			enterScope();
+			int i = 0;
+			symbolTable.peek().put("_", JSONValue.toJSONString(arg));
+		       	result = cmd.exec();
+			exitScope();
+			return result;
+		}
+
+		public String exec() throws ScriptParseException {
+			String result;
+			enterScope();
+		       	result = cmd.exec();
+			exitScope();
+			return result;
+		}
 	}
 
 	private class If implements Command {
@@ -771,20 +834,20 @@ public class Script{
 		}
 
 		public Object eval() throws ScriptParseException {
-			if (symbolTable.get(name) == null) {
+			if (symbolTable.peek().get(name) == null) {
 				throw new ScriptParseException("Undefined variable: " + name);
 			}
 			return this;
 		}
 		public String toString() {
-			return symbolTable.get(name).toString();
+			return symbolTable.peek().get(name).toString();
 		}
 
 		public void assign(Object value) throws ScriptParseException {
-			if (symbolTable.get(name) == null) {
+			if (symbolTable.peek().get(name) == null) {
 				throw new ScriptParseException("Undefined variable: " + name);
 			}
-			symbolTable.put(name, value);
+			symbolTable.peek().put(name, value);
 		}
 	}
 
@@ -898,7 +961,7 @@ public class Script{
 			  return new StringLiteral(input);
 		  } else if ( input.matches("^[0-9]+")) {
 			return new Number(input);
-		  } else if ( input.matches("^[a-zA-Z][a-zA-Z0-9]*$")) {
+		  } else if ( input.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")) {
 			  // function names have precedents over variables
 			  if (functionTable.containsKey(input)) {
 				  Function f = functionTable.get(input);
@@ -1095,7 +1158,8 @@ public class Script{
 					ops.remove(start+1);
 					return ops.get(start);
 				}
-			} else if (ops.size() > (start)) {
+			} 
+			if (ops.size() > (start)) {
  
 				// this is the case where terminator is right after the start
 				if (terminator.isInstance(ops.get(start))) {
@@ -1148,6 +1212,9 @@ public class Script{
 
 		if (token.equals("while")) {
 		  return new While();
+		}
+		if (token.equals("sub")) {
+		  return new FunctionDeclare();
 		}
 		if (token.equals("var")) {
 		  return new Var();

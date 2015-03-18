@@ -239,7 +239,8 @@ class ScriptScanner {
 
 				if ((c >= 'a' && c <= 'z')
 					|| (c >= 'A' && c <= 'Z')
-					|| (c >= '0' && c <= '9')) {
+					|| (c >= '0' && c <= '9')
+					|| c == '_') {
 					
 					sb.append(c);
 				}

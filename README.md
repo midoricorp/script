@@ -60,4 +60,9 @@ commands should be terminated by ;
 * while (*expression*) command - executes command while *expression* is true
 * get *url* - returns the body of the HTTP response of *url* as a string
 * *expression* - expressions such as i++;
+* sub *token* command - declares *token* as a function
 
+
+###Functions
+
+Functions are declared by the "sub" command.  Parameters are passed in the _ variable.  Functions act as stand-alone subroutines and cannot access variables declared outside of the function.
