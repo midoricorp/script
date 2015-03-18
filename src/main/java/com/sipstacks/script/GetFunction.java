@@ -4,18 +4,24 @@ import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.List;
 
 
 public class GetFunction extends ExternalFunction {
 	
-	public String run(String args) {
+	public String run(List<String> args) {
 		URL url;
 		HttpURLConnection conn;
 		BufferedReader rd;
 		String line;
 		String result = "";
+
+		if (args.size() == 0) {
+			return "Get() requires 1 arg";
+		}
+
 		try {
-			url = new URL(args);
+			url = new URL(args.get(0));
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", "application/json");
