@@ -1,0 +1,9 @@
+sub chuck
+{
+		print _[0] . " " . _[1] . " can read STDIN";
+}
+
+print "Output of chuck '" . chuck("Chuck", "Norris") . "'";
+Output of chuck 'Vincent Morsiani can read STDIN
+'
+

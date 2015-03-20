@@ -22,6 +22,8 @@ public class Script{
 	ScriptScanner scanner;
 	Random random;
 
+	private FunctionListener _functionListener = null;
+
 	int loopLimit;
 
 	private void enterScope() {
@@ -168,6 +170,10 @@ public class Script{
 			this.cmd = new ScopedCommand(getCommand());
 			if (cmd == null) {
 				throw new ScriptParseException("sub: missing command", scanner);
+			}
+
+			if (_functionListener != null) {
+				_functionListener.addFunction(func_name, cmd);
 			}
 
 		}
@@ -1241,6 +1247,9 @@ public class Script{
 		functionTable.put(name,f);
 	}
 
+	public void addFunctionListener(FunctionListener listener) {
+		_functionListener = listener;
+	}
 
 	public String run() throws ScriptParseException {
 		StringBuffer result = new StringBuffer();
