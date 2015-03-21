@@ -4,6 +4,3 @@ sub chuck
 }
 
 print "Output of chuck '" . chuck("Chuck", "Norris") . "'";
-Output of chuck 'Vincent Morsiani can read STDIN
-'
-
