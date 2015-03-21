@@ -773,6 +773,46 @@ public class Script{
 		}
 	}
 
+	private class SizeOf extends UnaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			Object eval = right.eval();
+
+			if (eval instanceof JSONArray) {
+				return Integer.valueOf(((JSONArray)eval).size());
+
+			}
+			eval=JSONValue.parse(eval.toString());
+
+			if ( eval != null && eval instanceof JSONArray) {
+				return Integer.valueOf(((JSONArray)eval).size());
+			}
+			return 0;
+		}
+	}
+
+	private class Keys extends UnaryOperator {
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			Object eval = right.eval();
+
+			if (eval instanceof JSONObject) {
+				JSONArray keys = new JSONArray();	
+				keys.addAll(((JSONObject)eval).keySet());
+				return keys;
+
+			}
+			eval=JSONValue.parse(eval.toString());
+
+			if ( eval != null && eval instanceof JSONObject) {
+				JSONArray keys = new JSONArray();	
+				keys.addAll(((JSONObject)eval).keySet());
+				return keys;
+			}
+			return new JSONArray();
+		}
+	}
+
 	private class Concat extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
@@ -1002,6 +1042,10 @@ public class Script{
 			return new RBracket();
 		  } else if(input.equals("rand")) {
 		  	return new Rand();
+		  } else if(input.equals("sizeof")) {
+		  	return new SizeOf();
+		  } else if(input.equals("keys")) {
+		  	return new Keys();
 		  } else if(input.startsWith("\"")) {
 			  return new StringLiteral(input);
 		  } else if ( input.matches("^[0-9]+")) {
@@ -1047,6 +1091,10 @@ public class Script{
 		op.operators.add(Decrement.class);
 		classes.add(op);
 
+		op = new OperationSet(false);
+		op.operators.add(Not.class);
+		classes.add(op);
+
 		op = new OperationSet(true);
 		op.operators.add(BindingOperator.class);
 		classes.add(op);
@@ -1061,6 +1109,11 @@ public class Script{
 		op.operators.add(Add.class);
 		op.operators.add(Subtract.class);
 		op.operators.add(Concat.class);
+		classes.add(op);
+
+		op = new OperationSet(false);
+		op.operators.add(Keys.class);
+		op.operators.add(SizeOf.class);
 		classes.add(op);
 
 		op = new OperationSet(true);
@@ -1138,7 +1191,7 @@ public class Script{
 				for (int i = ops.size()-1; i >= start; i--) {
 					Operation command = ops.get(i);
 					if(terminator.isInstance(command)) {
-						startPos = i;
+						startPos = i-1;
 					}
 				}
 			} else {

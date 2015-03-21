@@ -28,6 +28,8 @@ src/main/resources/
 * + - Add
 * - - Subtract
 * . - String Concatenation
+* sizeof - returns sizeof an array, 0 if not an array
+* keys - returns the keys of a map as an array, empty array if not a map
 * > - Greater Than
 * >= - Greater Than or Equals
 * < - Less Than

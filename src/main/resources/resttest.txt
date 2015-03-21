@@ -1,2 +1,15 @@
-var response = get("http://api.urbandictionary.com/v0/define?term=midori");
-print response->"list"[0]->"definition";
+var response = get("http://api.urbandictionary.com/v0/random");
+var list_size = sizeof response->"list";
+var i = 0;
+while(i < list_size) {
+	print "(";
+	var key_list = keys response->"list"[i];
+	var key_size = sizeof key_list;
+	var j = 0;
+	while (j < key_size) {
+		print "    " . key_list[j] . " : " . response->"list"[i]->(key_list[j]);
+		j++;
+	}
+	print ")";
+	i++;
+}
