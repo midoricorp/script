@@ -188,6 +188,7 @@ public class Script{
 	private class ScopedCommand implements Command {
 
 		Command cmd;
+		private int totalCalls = 0;
 
 		public ScopedCommand(Command cmd) {
 			this.cmd = cmd;
@@ -204,6 +205,11 @@ public class Script{
 		}
 
 		public String exec() throws ScriptParseException {
+			if(loopLimit > 0 && totalCalls > loopLimit) {
+				throw new ScriptParseException("ScopedCommand: recursion depth exceeded. Limit=" + (loopLimit) + " Current=" + totalCalls);
+			}
+			totalCalls++;
+
 			String result;
 			enterScope();
 		       	result = cmd.exec();
@@ -212,6 +218,7 @@ public class Script{
 		}
 
 		public void reset() {
+			totalCalls = 0;
 			cmd.reset();
 		}
 	}
