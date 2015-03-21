@@ -11,4 +11,6 @@ public abstract class ExternalFunction implements Command {
 	public String exec(List<String> args) throws ScriptParseException {
 		return run(args);
 	}
+
+	public void reset() {}
 }

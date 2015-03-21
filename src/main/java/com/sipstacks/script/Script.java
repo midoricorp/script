@@ -83,6 +83,8 @@ public class Script{
 
 		}
 
+		public void reset() {}
+
 	}
 
 	private class Var implements Command {
@@ -147,6 +149,8 @@ public class Script{
 
 		  }
 
+		public void reset() {}
+
 	}
 
 	private class FunctionDeclare implements Command {
@@ -177,6 +181,8 @@ public class Script{
 			}
 
 		}
+
+		public void reset() {}
 	}
 
 	private class ScopedCommand implements Command {
@@ -203,6 +209,10 @@ public class Script{
 		       	result = cmd.exec();
 			exitScope();
 			return result;
+		}
+
+		public void reset() {
+			cmd.reset();
 		}
 	}
 
@@ -281,6 +291,14 @@ public class Script{
 			this.cmd = cmd;
 			this.else_cmd = else_cmd;
 		}
+
+		public void reset() {
+			cmd.reset();
+
+			if (else_cmd != null) {
+				else_cmd.reset();
+			}
+		}
 	}
 
 	private class While implements Command {
@@ -352,6 +370,11 @@ public class Script{
 			this.op = op;
 			this.cmd = cmd;
 		}
+
+		public void reset() {
+			totalCalls = 0;
+			cmd.reset();
+		}
 	}
 
 	private class CommandBlock implements Command {
@@ -367,6 +390,12 @@ public class Script{
 				sb.append(cmd.exec());
 			}
 			return sb.toString();
+		}
+
+		public void reset() {
+			for (Command cmd : commands) {
+				cmd.reset();
+			}
 		}
 
 		public CommandBlock() throws ScriptParseException {
@@ -411,6 +440,9 @@ public class Script{
 			} else {
 				return "\n";
 			}
+		}
+
+		public void reset() {
 		}
 
 		public Print() throws ScriptParseException {
@@ -1251,6 +1283,12 @@ public class Script{
 		_functionListener = listener;
 	}
 
+	public void reset() {
+		for (Function f : functionTable.values()) {
+			f.func.reset();
+		}
+	}
+
 	public String run() throws ScriptParseException {
 		StringBuffer result = new StringBuffer();
 		Command cmd = null;
@@ -1258,6 +1296,7 @@ public class Script{
 		while((cmd = getCommand())!=null){
 			result.append(cmd.exec());
 		}
+		reset();
 		return result.toString();
 	}
 
