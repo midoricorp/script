@@ -21,6 +21,7 @@ src/main/resources/
 * function *param* - all functions take one parameter, if *param* is an expression it should be surrounded by ()
 * ++ - Post Increment
 * -- - Post Decrement
+* ! - Not operator
 * =~ - Binding Operator - Used for binding a regex to a string (substitution or matching)
 * * - Multiply
 * / - Divide
