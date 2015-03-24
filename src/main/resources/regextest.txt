@@ -3,7 +3,7 @@ print "Expect 0 " . "BOB" =~ "/bob/";
 print "Expect 0 " . "BOB" =~ "bob";
 print "Expect 1 " . "BOB" =~ "BOB";
 
-"Find the number: 123" =~ "/number: ([0-9]+)/";
+"Find the number: 123 in this string " =~ "/number: ([0-9]+)/";
 
 print "Expect 123 " . _[1];
 
