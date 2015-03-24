@@ -627,13 +627,13 @@ public class Script{
 				// simple string match
 				boolean res = left.eval().toString().contains(args[0]);
 				return res?"1":"0";
-			} else if(args.length == 3 ) {
+			} else if (args.length == 3 ) {
 				// regex match in the form of /regex/opts
 				int flags = 0;
-				if(args[2].contains("i")) {
+				if (args[2].contains("i")) {
 					flags |= Pattern.CASE_INSENSITIVE;
 				}
-				if(args[2].contains("s")) {
+				if (args[2].contains("s")) {
 					flags |= Pattern.DOTALL;
 				}
 				if(args[2].contains("m")) {
@@ -641,8 +641,19 @@ public class Script{
 				}
 
 				Pattern p = Pattern.compile(args[1],flags);
-				return p.matcher(left.eval().toString()).matches()?"1":"0";
-			} else if(args.length == 4) {
+				Matcher m = p.matcher(left.eval().toString());
+				
+				boolean found = m.find();
+				if (found) {
+					JSONArray arr = new JSONArray();
+					for (int i = 0; i <= m.groupCount(); i++) {
+						arr.add(m.group(i));
+					}
+
+					symbolTable.peek().put("_", arr);
+				}
+				return found?"1":"0";
+			} else if (args.length == 4) {
 				// substitution s/src/dst/opts
 				Object lval = left.eval();
 
