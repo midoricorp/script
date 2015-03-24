@@ -73,7 +73,8 @@ Functions are declared by the "sub" command.  Parameters are passed in the _ var
 ### Regular Expressions
 the right hand operator is a string that can take multiple forms
 * "string" - simple substring match
-* "/regex/options" - regular expression matching.  Options can be as follows
+* "/regex/options" - regular expression matching.  Matched character groups stored in an array in _ .   Options can be as follows
 ** i - case insensitive match
 ** s - dot all .  matches any character, including a line terminator
 ** m - multiline  the expressions ^ and $ match just after or just before, respectively, a line terminator or the end of the input sequence
+* "/regex/replace/options" - replace everything matched by regex with replace
