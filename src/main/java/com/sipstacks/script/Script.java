@@ -1251,12 +1251,7 @@ public class Script{
 		}
 
 		if (start > 0) {
-			if (ops.size() > (start + 1)) {
-				if (terminator.isInstance(ops.get(start+1))) {
-					ops.remove(start+1);
-					return ops.get(start);
-				}
-			} 
+			// check for the closest terminator to start
 			if (ops.size() > (start)) {
  
 				// this is the case where terminator is right after the start
@@ -1266,6 +1261,12 @@ public class Script{
 					return ops.get(start);
 				}
 			}
+			if (ops.size() > (start + 1)) {
+				if (terminator.isInstance(ops.get(start+1))) {
+					ops.remove(start+1);
+					return ops.get(start);
+				}
+			} 
 
 			String list = "";
 			if (start < ops.size()) {

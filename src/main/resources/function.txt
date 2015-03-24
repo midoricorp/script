@@ -4,3 +4,10 @@ sub chuck
 }
 
 print "Output of chuck '" . chuck("Chuck", "Norris") . "'";
+
+sub test 
+{
+	print "a test";
+}
+print "This is " . (test());
+
