@@ -233,7 +233,7 @@ public class Script{
 		}
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
-			if (Integer.parseInt(op.eval().toString()) != 0) {
+			if (parseInteger(op.eval().toString()) != 0) {
 				sb.append(cmd.exec());
 			}
 			else if (else_cmd != null) {
@@ -329,7 +329,7 @@ public class Script{
 		public String exec() throws ScriptParseException {
 			StringBuffer sb = new StringBuffer();
 			int counter = 0;
-			while (Integer.parseInt(op.eval().toString()) != 0) {
+			while (parseInteger(op.eval().toString()) != 0) {
 				if(loopLimit > 0 && counter > loopLimit) {
 					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter + " Condition=" + op.eval());
 				}
@@ -557,7 +557,7 @@ public class Script{
 					
 				}
 
-			}.init(left.eval(),Integer.parseInt(right.eval().toString()));
+			}.init(left.eval(),parseInteger(right.eval().toString()));
 		}
 	}
 
@@ -609,7 +609,7 @@ public class Script{
 			super.eval();
 
 			Assignable ass = (Assignable)left;
-			int v = Integer.parseInt(left.eval().toString());
+			int v = parseInteger(left.eval().toString());
 			Integer result = Integer.valueOf(v+1);
 			ass.assign(result);
 			return Integer.valueOf(v);
@@ -621,7 +621,7 @@ public class Script{
 			super.eval();
 
 			Assignable ass = (Assignable)left;
-			int v = Integer.parseInt(left.eval().toString());
+			int v = parseInteger(left.eval().toString());
 			Integer result = Integer.valueOf(v-1);
 			ass.assign(result);
 			return Integer.valueOf(v);
@@ -691,84 +691,84 @@ public class Script{
 	private class BitwiseAnd extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) & Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) & parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class BitwiseOr extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) | Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) | parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class Add extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) + Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) + parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class Subtract extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) - Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) - parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class Multiply extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) * Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) * parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class Divide extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) / Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) / parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class Modulo extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.valueOf(Integer.parseInt(left.eval().toString()) % Integer.parseInt(right.eval().toString()));
+			return Integer.valueOf(parseInteger(left.eval().toString()) % parseInteger(right.eval().toString()));
 		}
 	}
 
 	private class GreaterThan extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(left.eval().toString()) > Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+			return parseInteger(left.eval().toString()) > parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class GreaterThanOrEquals extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(left.eval().toString()) >= Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+			return parseInteger(left.eval().toString()) >= parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class LessThan extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(left.eval().toString()) < Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+			return parseInteger(left.eval().toString()) < parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class LessThanOrEquals extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(left.eval().toString()) <= Integer.parseInt(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
+			return parseInteger(left.eval().toString()) <= parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
 	private class ConditionalAnd extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			boolean result = (Integer.parseInt(left.eval().toString()) != 0) && (Integer.parseInt(right.eval().toString()) != 0);
+			boolean result = (parseInteger(left.eval().toString()) != 0) && (parseInteger(right.eval().toString()) != 0);
 			return result?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
@@ -776,7 +776,7 @@ public class Script{
 	private class ConditionalOr extends BinaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			boolean result = (Integer.parseInt(left.eval().toString()) != 0) || (Integer.parseInt(right.eval().toString()) != 0);
+			boolean result = (parseInteger(left.eval().toString()) != 0) || (parseInteger(right.eval().toString()) != 0);
 			return result?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
@@ -798,7 +798,7 @@ public class Script{
 	private class Not extends UnaryOperator {
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return Integer.parseInt(right.eval().toString()) == 0?Integer.valueOf("1"):Integer.valueOf("0");
+			return parseInteger(right.eval().toString()) == 0?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
@@ -1328,6 +1328,18 @@ public class Script{
 		return ops.get(0);
 
 
+	}
+
+	private int parseInteger(String val) throws ScriptParseException {
+		if (val == "") {
+			return 0;
+		}
+
+		try {
+			return Integer.parseInt(val);
+		} catch (NumberFormatException e) {
+			throw new ScriptParseException("The value '" +val+"' can not be used as a number");
+		}
 	}
 
 
