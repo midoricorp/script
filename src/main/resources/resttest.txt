@@ -1,7 +1,6 @@
 var response = get("http://api.urbandictionary.com/v0/random");
-var list_size = sizeof response->"list";
 var i = 0;
-while(i < list_size) {
+while(i < (sizeof response->"list")) {
 	print "(";
 	var key_list = keys response->"list"[i];
 	var key_size = sizeof key_list;

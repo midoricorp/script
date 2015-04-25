@@ -258,18 +258,27 @@ public class Script{
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
+			int depth = 0;
+
 			while (true) {
 				token = scanner.getToken();
 				if (token == null ) {
 					throw new ScriptParseException("If: unexpected eof on condition", scanner);
 				}
 
-				if (token.equals(")")) {
-					op = getOperation(ops);			
-					if (op == null) {
-						throw new ScriptParseException("If: missing op inside ()", scanner);
+				if (token.equals("(")) {
+					depth++;
+				} else if (token.equals(")")) {
+					// make sure its the RParen we want
+					if (depth == 0) {
+						op = getOperation(ops);			
+						if (op == null) {
+							throw new ScriptParseException("If: missing op inside ()", scanner);
+						}
+						break;
+					} else {
+						depth--;
 					}
-					break;
 				}
 				try {
 					ops.add(tokenToOp(token));
@@ -348,18 +357,27 @@ public class Script{
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
+			int depth = 0;
+
 			while (true) {
 				token = scanner.getToken();
 				if (token == null ) {
 					throw new ScriptParseException("While: unexpected eof on condition", scanner);
 				}
 
-				if (token.equals(")")) {
-					op = getOperation(ops);			
-					if (op == null) {
-						throw new ScriptParseException("While: missing op inside ()", scanner);
+				if (token.equals("(")) {
+					depth++;
+				} else if (token.equals(")")) {
+					// make sure it's the RParen we want we want
+					if (depth == 0) {
+						op = getOperation(ops);			
+						if (op == null) {
+							throw new ScriptParseException("While: missing op inside ()", scanner);
+						}
+						break;
+					} else {
+						depth--;
 					}
-					break;
 				}
 
 				try {
