@@ -4,13 +4,13 @@
 
     <groupId>com.sipstacks.script</groupId>
     <artifactId>script</artifactId>
-    <version>0.5</version>
+    <version>0.6-SNAPSHOT</version>
 
     <scm>
         <connection>scm:git:https://github.com/tsearle/script.git</connection>
         <developerConnection>scm:git:https://github.com/tsearle/script.git</developerConnection>
         <url>https://github.com/tsearle/script</url>
-        <tag>script-0.5</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
