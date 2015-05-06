@@ -36,6 +36,6 @@ class Function extends UnaryOperator implements Cloneable {
 	}
 
 	public String dump() {
-		return name + " " + right.dump() + " ";
+		return name + " " + right.dump();
 	}
 }

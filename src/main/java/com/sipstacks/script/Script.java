@@ -1183,7 +1183,7 @@ public class Script{
 		}
 
 		public String dump() {
-			return " " + name + " ";
+			return name;
 		}
 	}
 
