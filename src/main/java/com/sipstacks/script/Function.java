@@ -3,6 +3,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 class Function extends UnaryOperator implements Cloneable {
+	String name;
 	Command func;
 
 	public Object eval() throws ScriptParseException {
@@ -30,6 +31,11 @@ class Function extends UnaryOperator implements Cloneable {
 	public Function clone() {
 		Function f = new Function();
 		f.func = func;
+		f.name = name;
 		return f;
+	}
+
+	public String dump() {
+		return name + " " + right.dump() + " ";
 	}
 }

@@ -13,4 +13,8 @@ public abstract class ExternalFunction implements Command {
 	}
 
 	public void reset() {}
+
+	public String dump() {
+		return "**Can't dump external functions!**\n";
+	}
 }

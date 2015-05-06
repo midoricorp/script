@@ -22,6 +22,8 @@ public class Script{
 	ScriptScanner scanner;
 	Random random;
 
+	ArrayList<Command> script = new ArrayList<Command>();
+
 	private FunctionListener _functionListener = null;
 
 	int loopLimit;
@@ -84,6 +86,10 @@ public class Script{
 		}
 
 		public void reset() {}
+		
+		public String dump() {
+			return op.dump() + ";\n";
+		}
 
 	}
 
@@ -151,6 +157,17 @@ public class Script{
 
 		public void reset() {}
 
+		public String dump() {
+			String str = "var " + name;
+
+			if (op != null) {
+				str += " = " + op.dump();
+			}
+
+			str += ";\n";
+			return str;
+		}
+
 	}
 
 	private class FunctionDeclare implements Command {
@@ -163,6 +180,7 @@ public class Script{
 		public String exec() throws ScriptParseException {
 			Function f = new Function();
 			f.func = cmd;
+			f.name = func_name;
 			functionTable.put(func_name,f);
 			return "";
 		}
@@ -183,6 +201,10 @@ public class Script{
 		}
 
 		public void reset() {}
+
+		public String dump() {
+			return "sub " + func_name + "\n" + cmd.dump() + "\n";
+		}
 	}
 
 	private class ScopedCommand implements Command {
@@ -221,6 +243,10 @@ public class Script{
 			totalCalls = 0;
 			cmd.reset();
 		}
+
+		public String dump() {
+			return cmd.dump();
+		}
 	}
 
 	private class If implements Command {
@@ -241,6 +267,16 @@ public class Script{
 			}
 
 			return sb.toString();
+		}
+
+		public String dump() {
+			String str = "if (" + op.dump() + ")\n" + cmd.dump();
+
+			if (else_cmd != null) {
+				str += " else \n" + else_cmd.dump();
+			}
+
+			return str;
 		}
 
 		public If() throws ScriptParseException {
@@ -343,6 +379,10 @@ public class Script{
 			return sb.toString();
 		}
 
+		public String dump() {
+			return "while (" + op.dump() + ")\n" + cmd.dump();
+		}
+
 		public While() throws ScriptParseException {
 
 			Operation op = null;
@@ -417,6 +457,17 @@ public class Script{
 			return sb.toString();
 		}
 
+		public String dump() {
+			StringBuffer sb = new StringBuffer();
+			sb.append("{\n");
+			for (Command cmd : commands) {
+				sb.append("\t");
+				sb.append(cmd.dump());
+			}
+			sb.append("}\n");
+			return sb.toString();
+		}
+
 		public void reset() {
 			for (Command cmd : commands) {
 				cmd.reset();
@@ -467,6 +518,10 @@ public class Script{
 			}
 		}
 
+		public String dump() {
+			return "print " + op.dump() + ";\n";
+		}
+
 		public void reset() {
 		}
 
@@ -510,11 +565,19 @@ public class Script{
 			// () is usless but legal
 			return "";
 		}
+
+		public String dump() {
+			return "(" + inner.dump() + ")";
+		}
 	}
 
 	private class RParen implements Operation {
 		public Object eval() throws ScriptParseException {
 			throw new ScriptParseException("Trying to eval a ). This shouldn't happen");
+		}
+
+		public String dump() {
+			return ""; // removed during reduction so no need for implementation
 		}
 	}
 
@@ -559,17 +622,26 @@ public class Script{
 
 			}.init(left.eval(),parseInteger(right.eval().toString()));
 		}
+
+		public String dump() {
+			return left.dump() + "[" + right.dump() + "]";
+		}
 	}
 
 	private class RBracket implements Operation {
 		public Object eval() throws ScriptParseException {
 			throw new ScriptParseException("Trying to eval a ]. This shouldn't happen");
 		}
+
+		public String dump() {
+			return ""; // removed during reduction so no need for implementation
+		}
 	}
 
 	private static abstract class BinaryOperator implements Operation {
 		Operation left;
 		Operation right;
+		String operator;
 
 		public Object eval() throws ScriptParseException {
 			if (left == null) {
@@ -584,10 +656,15 @@ public class Script{
 			return null;
 		}
 
+		public String dump() {
+			return left.dump() + operator + right.dump();
+		}
+
 	}
 
 	private static abstract class PostfixOperator implements Operation {
 		Operation left;
+		String operator;
 
 		public Object eval() throws ScriptParseException {
 			if (left == null) {
@@ -602,9 +679,18 @@ public class Script{
 			return null;
 		}
 
+		public String dump() {
+			return left.dump() + operator;
+		}
+
 	}
 
 	private class Increment extends PostfixOperator {
+
+		public Increment() {
+			operator = "++";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
@@ -617,6 +703,11 @@ public class Script{
 	}	
 
 	private class Decrement extends PostfixOperator {
+
+		public Decrement() {
+			operator = "--";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
@@ -629,6 +720,11 @@ public class Script{
 	}	
 
 	private class BindingOperator extends BinaryOperator {
+
+		public BindingOperator() {
+			operator = "=~";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
@@ -689,6 +785,11 @@ public class Script{
 	}
 
 	private class BitwiseAnd extends BinaryOperator {
+
+		public BitwiseAnd() {
+			operator = "&";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) & parseInteger(right.eval().toString()));
@@ -696,6 +797,11 @@ public class Script{
 	}
 
 	private class BitwiseOr extends BinaryOperator {
+
+		public BitwiseOr() {
+			operator = "|";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) | parseInteger(right.eval().toString()));
@@ -703,6 +809,11 @@ public class Script{
 	}
 
 	private class Add extends BinaryOperator {
+
+		public Add() {
+			operator = "+";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) + parseInteger(right.eval().toString()));
@@ -710,6 +821,11 @@ public class Script{
 	}
 
 	private class Subtract extends BinaryOperator {
+
+		public Subtract() {
+			operator = "-";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) - parseInteger(right.eval().toString()));
@@ -717,6 +833,11 @@ public class Script{
 	}
 
 	private class Multiply extends BinaryOperator {
+
+		public Multiply() {
+			operator = "*";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) * parseInteger(right.eval().toString()));
@@ -724,6 +845,11 @@ public class Script{
 	}
 
 	private class Divide extends BinaryOperator {
+
+		public Divide() {
+			operator = "/";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) / parseInteger(right.eval().toString()));
@@ -731,6 +857,11 @@ public class Script{
 	}
 
 	private class Modulo extends BinaryOperator {
+
+		public Modulo() {
+			operator = "%";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) % parseInteger(right.eval().toString()));
@@ -738,6 +869,11 @@ public class Script{
 	}
 
 	private class GreaterThan extends BinaryOperator {
+
+		public GreaterThan() {
+			operator = ">";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return parseInteger(left.eval().toString()) > parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
@@ -745,6 +881,11 @@ public class Script{
 	}
 
 	private class GreaterThanOrEquals extends BinaryOperator {
+
+		public GreaterThanOrEquals() {
+			operator = ">=";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return parseInteger(left.eval().toString()) >= parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
@@ -752,6 +893,11 @@ public class Script{
 	}
 
 	private class LessThan extends BinaryOperator {
+
+		public LessThan() {
+			operator = "<";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return parseInteger(left.eval().toString()) < parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
@@ -759,6 +905,11 @@ public class Script{
 	}
 
 	private class LessThanOrEquals extends BinaryOperator {
+
+		public LessThanOrEquals() {
+			operator = "<=";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return parseInteger(left.eval().toString()) <= parseInteger(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
@@ -766,6 +917,11 @@ public class Script{
 	}
 
 	private class ConditionalAnd extends BinaryOperator {
+
+		public ConditionalAnd() {
+			operator = "&&";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			boolean result = (parseInteger(left.eval().toString()) != 0) && (parseInteger(right.eval().toString()) != 0);
@@ -774,6 +930,11 @@ public class Script{
 	}
 
 	private class ConditionalOr extends BinaryOperator {
+
+		public ConditionalOr() {
+			operator = "||";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			boolean result = (parseInteger(left.eval().toString()) != 0) || (parseInteger(right.eval().toString()) != 0);
@@ -782,6 +943,11 @@ public class Script{
 	}
 
 	private class Equals extends BinaryOperator {
+
+		public Equals() {
+			operator = "==";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return left.eval().toString().equals(right.eval().toString())?Integer.valueOf("1"):Integer.valueOf("0");
@@ -789,6 +955,11 @@ public class Script{
 	}
 
 	private class NotEquals extends BinaryOperator {
+
+		public NotEquals() {
+			operator = "!=";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return left.eval().toString().equals(right.eval().toString())?Integer.valueOf("0"):Integer.valueOf("1");
@@ -796,6 +967,11 @@ public class Script{
 	}
 
 	private class Not extends UnaryOperator {
+
+		public Not() {
+			operator = "!";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return parseInteger(right.eval().toString()) == 0?Integer.valueOf("1"):Integer.valueOf("0");
@@ -803,6 +979,11 @@ public class Script{
 	}
 
 	private class SizeOf extends UnaryOperator {
+
+		public SizeOf() {
+			operator = "sizeof";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			Object eval = right.eval();
@@ -821,6 +1002,11 @@ public class Script{
 	}
 
 	private class Keys extends UnaryOperator {
+
+		public Keys() {
+			operator = "keys";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			Object eval = right.eval();
@@ -843,6 +1029,11 @@ public class Script{
 	}
 
 	private class Concat extends BinaryOperator {
+
+		public Concat() {
+			operator = ".";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return left.eval().toString()+right.eval().toString();
@@ -850,6 +1041,11 @@ public class Script{
 	}
 
 	private class Reference extends BinaryOperator {
+
+		public Reference() {
+			operator = "->";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			return new Assignable() {
@@ -904,6 +1100,10 @@ public class Script{
 		public Object eval() throws ScriptParseException {
 			return number;
 		}
+
+		public String dump() {
+			return number.toString();
+		}
 	}
 
 	private class Rand implements Operation {
@@ -914,6 +1114,10 @@ public class Script{
 
 		public Object eval() throws ScriptParseException {
 			return new Integer(random.nextInt(Integer.MAX_VALUE));
+		}
+
+		public String dump() {
+			return " rand ";
 		}
 	}
 
@@ -927,6 +1131,16 @@ public class Script{
 		public Object eval() throws ScriptParseException {
 			return string;
 		}
+
+		public String dump() {
+		
+			String result = string;
+			result = result.replace("\\", "\\\\");
+			result = result.replace("\"", "\\\"");
+			result = result.replace("\n", "\\\n");
+			result = result.replace("\t", "\\\t");
+			return "\"" + result + "\"";
+		}
 	}
 
 	private static class NoOP implements Operation, Listable {
@@ -936,6 +1150,10 @@ public class Script{
 
 		public List<Object> getList() {
 			return new JSONArray();
+		}
+
+		public String dump() {
+			return "";
 		}
 	}
 
@@ -963,9 +1181,18 @@ public class Script{
 			}
 			symbolTable.peek().put(name, value);
 		}
+
+		public String dump() {
+			return " " + name + " ";
+		}
 	}
 
 	private class Assign extends BinaryOperator {
+
+		public Assign() {
+			operator = "=";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
@@ -982,6 +1209,11 @@ public class Script{
 	}
 
 	private class Comma extends BinaryOperator implements Listable {
+
+		public Comma() {
+			operator = ",";
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 
@@ -1378,6 +1610,7 @@ public class Script{
 	public void addExternalFunction(String name, ExternalFunction func) {
 		Function f = new Function();
 		f.func= func;
+		f.name = name;
 		functionTable.put(name,f);
 	}
 
@@ -1397,9 +1630,21 @@ public class Script{
 
 		while((cmd = getCommand())!=null){
 			result.append(cmd.exec());
+			script.add(cmd);
 		}
 		reset();
 		return result.toString();
+	}
+	
+	public String dump() {
+		StringBuffer result = new StringBuffer();
+
+		for(Command cmd : script){
+			result.append(cmd.dump());
+		}
+		reset();
+		return result.toString();
+
 	}
 
 }
