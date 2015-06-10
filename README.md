@@ -71,9 +71,9 @@ commands should be terminated by ;
 Functions are declared by the "sub" command.  Parameters are passed in the _ variable.  Functions act as stand-alone subroutines and cannot access variables declared outside of the function.
 
 ### Regular Expressions
-the right hand operator is a string that can take multiple forms
-* "string" - simple substring match
-* "/regex/options" - regular expression matching.  Matched character groups stored in an array in _ .   Options can be as follows
+the right hand operator of =~ is a string that can take multiple forms
+* "string" - simple substring match, returns true if there is a match, false otherwise
+* "/regex/options" - regular expression matching.  Matched character groups stored in an array in _. Returns true if a match was found and _ has been set.   Options can be as follows,
 ** i - case insensitive match
 ** s - dot all .  matches any character, including a line terminator
 ** m - multiline  the expressions ^ and $ match just after or just before, respectively, a line terminator or the end of the input sequence
