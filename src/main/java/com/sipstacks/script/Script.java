@@ -459,11 +459,14 @@ public class Script{
 
 		public String dump() {
 			StringBuffer sb = new StringBuffer();
-			sb.append("{\n");
+			StringBuffer sb2 = new StringBuffer();
+			sb2.append("{\n");
 			for (Command cmd : commands) {
-				sb.append("\t");
-				sb.append(cmd.dump());
+				sb2.append(cmd.dump());
 			}
+			String cmdstr = sb2.toString().replaceAll("\n", "\n\t");
+			cmdstr = cmdstr.substring(0, cmdstr.length()-1);
+			sb.append(cmdstr);
 			sb.append("}\n");
 			return sb.toString();
 		}
