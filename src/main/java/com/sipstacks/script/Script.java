@@ -593,7 +593,20 @@ public class Script{
 				Object leval;
 
 				Object init(Object leval, int index) throws ScriptParseException {
-					Object obj=JSONValue.parse(leval.toString());
+					Object eval = null;
+					if (leval instanceof Assignable) {
+						eval = ((Assignable)leval).getValue();
+					} else {
+						eval = leval;
+					}
+
+					Object obj=null;
+					if ( leval instanceof JSONArray) {
+						obj = leval;
+					} else {
+						obj = JSONValue.parse(leval.toString());
+					}
+
 					if ( obj instanceof JSONArray) {
 						this.arr = (JSONArray)obj;
 					}
@@ -611,6 +624,10 @@ public class Script{
 
 				public String toString() {
 					return arr.get(index).toString();
+				}
+
+				public Object getValue() {
+					return arr.get(index);
 				}
 
 				public void assign(Object value) throws ScriptParseException {
@@ -991,6 +1008,10 @@ public class Script{
 			super.eval();
 			Object eval = right.eval();
 
+			if (eval instanceof Assignable) {
+				eval = ((Assignable)eval).getValue();
+			}
+
 			if (eval instanceof JSONArray) {
 				return Integer.valueOf(((JSONArray)eval).size());
 
@@ -1057,8 +1078,24 @@ public class Script{
 				Object leval;
 
 				Object init(Object leval, String key) throws ScriptParseException {
-					Object obj=JSONValue.parse(leval.toString());
-					if ( obj instanceof JSONObject) {
+					Object eval = null;
+					if (leval instanceof Assignable) {
+						eval = ((Assignable)leval).getValue();
+					} else {
+						eval = leval;
+					}
+
+					Object obj=null;
+					if (eval instanceof JSONObject) {
+						obj = eval;
+					} else {
+						obj = JSONValue.parse(eval.toString());
+						if (leval instanceof Assignable) {
+							((Assignable)leval).assign(obj);
+						}
+					}
+
+					if (obj instanceof JSONObject) {
 						this.map= (JSONObject)obj;
 					}
 					else {
@@ -1076,6 +1113,15 @@ public class Script{
 						return "";
 					} else {
 						return obj.toString();
+					}
+				}
+
+				public Object getValue() {
+					Object obj = map.get(key);
+					if(obj == null) {
+						return "";
+					} else {
+						return obj;
 					}
 				}
 
@@ -1174,6 +1220,15 @@ public class Script{
 			}
 			return this;
 		}
+
+		public Object getValue() {
+			Object obj = symbolTable.peek().get(name);
+			if (obj instanceof Assignable) {
+				return ((Assignable)obj).getValue();
+			}
+			return obj;
+		}
+
 		public String toString() {
 			return symbolTable.peek().get(name).toString();
 		}
