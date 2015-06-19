@@ -601,10 +601,13 @@ public class Script{
 					}
 
 					Object obj=null;
-					if ( leval instanceof JSONArray) {
-						obj = leval;
+					if ( eval instanceof JSONArray) {
+						obj = eval;
 					} else {
-						obj = JSONValue.parse(leval.toString());
+						obj = JSONValue.parse(eval.toString());
+						if (leval instanceof Assignable) {
+							((Assignable)leval).assign(obj);
+						}
 					}
 
 					if ( obj instanceof JSONArray) {
