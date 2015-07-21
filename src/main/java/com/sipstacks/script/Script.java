@@ -51,15 +51,15 @@ public class Script{
 	private class Expression implements Command {
 		Operation op;
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
+		public OutputStream exec() throws ScriptParseException {
 			// allow expression to be just a ;
 			if (op != null) {
 				op.eval();
 			}
-			return "";
+			return new OutputStream(); 
 		}
 
 		public Expression() throws ScriptParseException {
@@ -97,16 +97,16 @@ public class Script{
 		String name;
 		Operation op;
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
+		public OutputStream exec() throws ScriptParseException {
 			if (op == null) {
 				symbolTable.peek().put(name, "");
 			} else {
 				symbolTable.peek().put(name, op.eval());
 			}
-			return "";
+			return new OutputStream();
 		}
 
 		public Var() throws ScriptParseException {
@@ -174,15 +174,15 @@ public class Script{
 		String func_name;
 		Command cmd;
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
+		public OutputStream exec() throws ScriptParseException {
 			Function f = new Function();
 			f.func = cmd;
 			f.name = func_name;
 			functionTable.put(func_name,f);
-			return "";
+			return new OutputStream(); 
 		}
 
 		public FunctionDeclare() throws ScriptParseException {
@@ -216,8 +216,8 @@ public class Script{
 			this.cmd = cmd;
 		}
 
-		public String exec(List<String> arg) throws ScriptParseException {
-			String result;
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
+			OutputStream result;
 			enterScope();
 			int i = 0;
 			symbolTable.peek().put("_", JSONValue.toJSONString(arg));
@@ -226,13 +226,13 @@ public class Script{
 			return result;
 		}
 
-		public String exec() throws ScriptParseException {
+		public OutputStream exec() throws ScriptParseException {
 			if(loopLimit > 0 && totalCalls > loopLimit) {
 				throw new ScriptParseException("ScopedCommand: recursion depth exceeded. Limit=" + (loopLimit) + " Current=" + totalCalls);
 			}
 			totalCalls++;
 
-			String result;
+			OutputStream result;
 			enterScope();
 		       	result = cmd.exec();
 			exitScope();
@@ -254,19 +254,19 @@ public class Script{
 		Command cmd;
 		Command else_cmd;
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
-			StringBuffer sb = new StringBuffer();
+		public OutputStream exec() throws ScriptParseException {
+			OutputStream os = new OutputStream();
 			if (parseInteger(op.eval().toString()) != 0) {
-				sb.append(cmd.exec());
+				os.append(cmd.exec());
 			}
 			else if (else_cmd != null) {
-				sb.append(else_cmd.exec());
+				os.append(else_cmd.exec());
 			}
 
-			return sb.toString();
+			return os;
 		}
 
 		public String dump() {
@@ -359,11 +359,11 @@ public class Script{
 
 		private int totalCalls = 0;
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
-			StringBuffer sb = new StringBuffer();
+		public OutputStream exec() throws ScriptParseException {
+			OutputStream os = new OutputStream();
 			int counter = 0;
 			while (parseInteger(op.eval().toString()) != 0) {
 				if(loopLimit > 0 && counter > loopLimit) {
@@ -372,11 +372,11 @@ public class Script{
 				if(loopLimit > 0 && totalCalls > loopLimit*loopLimit) {
 					throw new ScriptParseException("While: nested loop count exceeded. Limit=" + (loopLimit*loopLimit) + " Current=" + totalCalls);
 				}
-				sb.append(cmd.exec());
+				os.append(cmd.exec());
 				counter++;
 				totalCalls++;
 			}
-			return sb.toString();
+			return os;
 		}
 
 		public String dump() {
@@ -446,15 +446,15 @@ public class Script{
 		ArrayList<Command> commands;
 
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
-			StringBuffer sb = new StringBuffer();
+		public OutputStream exec() throws ScriptParseException {
+			OutputStream os = new OutputStream();
 			for (Command cmd : commands) {
-				sb.append(cmd.exec());
+				os.append(cmd.exec());
 			}
-			return sb.toString();
+			return os;
 		}
 
 		public String dump() {
@@ -509,19 +509,33 @@ public class Script{
 
 	private class Print implements Command {
 		Operation op;
+		boolean isHtml;
 
-		public String exec(List<String> arg) throws ScriptParseException {
+		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
-		public String exec() throws ScriptParseException {
+		public OutputStream exec() throws ScriptParseException {
+			OutputStream os = new OutputStream();
 			if (op != null) {
-				return op.eval().toString() + "\n";
+				if (isHtml) {
+					os.appendHtml(op.eval().toString() + "\n");
+				} else {
+					os.appendText(op.eval().toString() + "\n");
+				}
 			} else {
-				return "\n";
+				if (isHtml) {
+					os.appendHtml("\n");
+				} else {
+					os.appendText("\n");
+				}
 			}
+			return os;
 		}
 
 		public String dump() {
+			if (isHtml) {
+				return "print HTML " + op.dump() + ";\n";
+			}
 			return "print " + op.dump() + ";\n";
 		}
 
@@ -534,8 +548,22 @@ public class Script{
 
 			ArrayList<Operation> ops = new ArrayList<Operation>();
 
+			boolean first = true;
+
 			while (true) {
 				String token = scanner.getToken();
+				if ( first && token.equals("HTML")) {
+					isHtml = true;
+					first = false;
+					continue;
+				} else if ( first && token.equals("TEXT")) {
+					isHtml = false;
+					first = false;
+					continue;
+				}
+
+				first = false;
+
 				if (token == null ) {
 					throw new ScriptParseException("Print: unexpected eof on condition", scanner);
 				}
@@ -570,7 +598,11 @@ public class Script{
 		}
 
 		public String dump() {
-			return "(" + inner.dump() + ")";
+			if (inner != null) {
+				return "(" + inner.dump() + ")";
+			} else {
+				return "()";
+			}
 		}
 	}
 
@@ -1189,8 +1221,8 @@ public class Script{
 			String result = string;
 			result = result.replace("\\", "\\\\");
 			result = result.replace("\"", "\\\"");
-			result = result.replace("\n", "\\\n");
-			result = result.replace("\t", "\\\t");
+			result = result.replace("\n", "\\n");
+			result = result.replace("\t", "\\t");
 			return "\"" + result + "\"";
 		}
 	}
@@ -1545,8 +1577,8 @@ public class Script{
 					if ( clazz.isInstance(command) ) {
 						if (UnaryOperator.class.isAssignableFrom(command.getClass())) {
 							UnaryOperator op = (UnaryOperator)command;
-							if (ops.size() == i+i || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
-								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument after " + ops.get(i-1).dump());
+							if (ops.size() == (i+1) || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument expected");
 							}
 							op.right = ops.get(i+1);
 							ops.remove(i+1);
@@ -1563,7 +1595,7 @@ public class Script{
 							i--;
 						} else if (BinaryOperator.class.isAssignableFrom(command.getClass())) {
 							BinaryOperator op = (BinaryOperator)command;
-							if (ops.size() == i+i || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
+							if (ops.size() == (i+1) || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
 								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument after " + ops.get(i-1).dump());
 							}
 
@@ -1721,8 +1753,8 @@ public class Script{
 		}
 	}
 
-	public String run() throws ScriptParseException {
-		StringBuffer result = new StringBuffer();
+	public OutputStream run() throws ScriptParseException {
+		OutputStream result = new OutputStream();
 		Command cmd = null;
 
 		while((cmd = getCommand())!=null){
@@ -1730,7 +1762,7 @@ public class Script{
 			script.add(cmd);
 		}
 		reset();
-		return result.toString();
+		return result;
 	}
 	
 	public String dump() {

@@ -8,11 +8,14 @@ public class CliInterpreter {
 		try{
 			Script s = new Script(new InputStreamReader(System.in));
 			s.setLoopLimit(100);
-			String result = s.run();
+			OutputStream result = s.run();
 			String code = s.dump();
 
 			System.out.println(code + "\n\n");
-			System.out.println(result);
+			System.out.println("Text Output:");
+			System.out.println(result.getText());
+			System.out.println("Html Output:");
+			System.out.println(result.getHtml());
 
 		}catch(ScriptParseException spe){
 			System.err.println(spe.getMessage());
