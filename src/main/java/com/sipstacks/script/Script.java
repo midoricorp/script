@@ -580,7 +580,7 @@ public class Script{
 		}
 
 		public String dump() {
-			return ""; // removed during reduction so no need for implementation
+			return ")"; // removed during reduction so no need for implementation, but useful for debugging
 		}
 	}
 
@@ -657,7 +657,7 @@ public class Script{
 		}
 
 		public String dump() {
-			return ""; // removed during reduction so no need for implementation
+			return "]"; // removed during reduction so no need for implementation but useful for debugging
 		}
 	}
 
@@ -1545,6 +1545,9 @@ public class Script{
 					if ( clazz.isInstance(command) ) {
 						if (UnaryOperator.class.isAssignableFrom(command.getClass())) {
 							UnaryOperator op = (UnaryOperator)command;
+							if (ops.size() == i+i || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument after " + ops.get(i-1).dump());
+							}
 							op.right = ops.get(i+1);
 							ops.remove(i+1);
 						} else if (LBracket.class.isAssignableFrom(command.getClass())) {
@@ -1560,6 +1563,10 @@ public class Script{
 							i--;
 						} else if (BinaryOperator.class.isAssignableFrom(command.getClass())) {
 							BinaryOperator op = (BinaryOperator)command;
+							if (ops.size() == i+i || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument after " + ops.get(i-1).dump());
+							}
+
 							op.left = ops.get(i-1);
 							op.right = ops.get(i+1);
 							ops.remove(i+1);
@@ -1590,29 +1597,58 @@ public class Script{
 				}
 			} 
 
-			String list = "";
+			String list = "Ops:  in () processing: operator expected between\n";
+
+			// if there is only one element and no terminator, then we were missing the terminator
+			if (ops.size() - start == 1) {
+				list = "Ops: in () processing:  missing " + terminator.getName() + " after\n";
+			}
+
 			if (start < ops.size()) {
+				boolean first = true;
 				for (Operation op : ops.subList(start, ops.size())) {
-					list += " " + op.getClass().getName();
+					if (!first) {
+						list += "and\n";
+					}
+					list += op.dump() + "\n";
+					first = false;
+
+					if (terminator.isInstance(op)) {
+						break;
+					}
+					
 				}
 			}
 			else {
-				list += " Full List: "; 
+				// Do we ever hit this case?
+				// if so we can't dump becaue all the args
+				// might not have been evaluated yet
+				boolean first = true;
+				list += "Full List:\n"; 
 				for (Operation op : ops) {
-					list += " " + op.getClass().getName();
+					if (!first) {
+						list += "and\n";
+					}
+					list += op.getClass().getName() + "\n";
+					first = false;
 				}
 			}
-			throw new ScriptParseException("Ops: incomplete reduction in () processing start=" + start + " ops.size=" +(ops.size()-start) + "(" + list + ")");
+			throw new ScriptParseException(list);
 
 		}
 
 
 		if (ops.size() > 1 ) {
 			String list = "";
+			boolean first = true;
 			for (Operation op : ops) {
-				list += " " + op.getClass().getName();
+				if (!first) {
+					list += "and\n";
+				}
+				list += op.dump() + "\n";
+				first = false;
 			}
-			throw new ScriptParseException("Ops: incomplete reduction ops.size=" +ops.size() + "(" + list + ")");
+			throw new ScriptParseException("Ops: operator expected between\n" + list);
 		}
 
 
