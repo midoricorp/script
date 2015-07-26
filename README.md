@@ -85,3 +85,10 @@ There are two available output streams TEXT and HTML.  All scripts should have a
 * print [STREAM] msg
 
 If STREAM is omitted it defauts to TEXT
+
+###Built-in Functions
+
+There are some functions built directly into the language
+* get url - sends an http request to the given url (with Accept json), returns the response.
+* url_encode - performs url escaping, usefull when trying to build urls for get
+* html_encode - performs xhtml escaping, useful when you want to make sure no illegal characters are in the xhtml body you are building

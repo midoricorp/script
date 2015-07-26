@@ -42,6 +42,8 @@ public class Script{
 		random = new Random();
 		loopLimit = -1; // default no limit
 		addExternalFunction("get", new GetFunction());
+		addExternalFunction("html_encode", new HtmlEncodeFunction());
+		addExternalFunction("url_encode", new UrlEncodeFunction());
 	}
 
 	public void setLoopLimit(int limit) {
