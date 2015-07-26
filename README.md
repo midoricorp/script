@@ -83,5 +83,5 @@ the right hand operator of =~ is a string that can take multiple forms
 
 There are two available output streams TEXT and HTML.  All scripts should have a TEXT output and can also have an optional HTML output.  Output is done with the print command which has the following syntax
 * print [STREAM] msg
-* 
+
 If STREAM is omitted it defauts to TEXT
