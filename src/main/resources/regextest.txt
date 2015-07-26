@@ -13,3 +13,7 @@ print "Expect 'Mary had a little goat' " . "Mary had a little lamb" =~ "/lamb/go
 var string = "Mary had a little lamb";
 string =~ "/lamb/goat/";
 print "Expect 'Mary had a little goat' " . string;
+
+string = "Hello\nWorld";
+string =~ "/\n/<\\/br>/";
+print "Expect 'Hello</br>World' " . string;

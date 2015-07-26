@@ -790,7 +790,10 @@ public class Script{
 				rval += "_"; 
 			}
 
-			String [] args = rval.split("/");
+			String delim = "/";
+			String esc = "\\";
+			String regex = "(?<!" + Pattern.quote(esc) + ")" + Pattern.quote(delim);
+			String [] args = rval.split(regex);
 
 			if (args.length == 1) {
 				// simple string match
