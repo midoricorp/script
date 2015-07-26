@@ -78,3 +78,9 @@ the right hand operator of =~ is a string that can take multiple forms
 ** s - dot all .  matches any character, including a line terminator
 ** m - multiline  the expressions ^ and $ match just after or just before, respectively, a line terminator or the end of the input sequence
 * "/regex/replace/options" - replace everything matched by regex with replace
+
+###Output
+
+There are two available output streams TEXT and HTML.  All scripts should have a TEXT output and can also have an optional HTML output.  Output is done with the print command which has the following syntax
+*print [STREAM] msg
+If STREAM is omitted it defauts to TEXT
