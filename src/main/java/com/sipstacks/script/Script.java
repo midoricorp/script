@@ -681,7 +681,8 @@ public class Script{
 		}
 
 		public String dump() {
-			return left.dump() + "[" + right.dump() + "]";
+			String rightstr = right==null?"undefined":right.dump();
+			return left.dump() + "[" + rightstr + "]";
 		}
 	}
 
@@ -714,7 +715,9 @@ public class Script{
 		}
 
 		public String dump() {
-			return left.dump() + operator + right.dump();
+			String leftstr = left == null ? " undefined ": left.dump();
+			String rightstr = right == null ? " undefined ": right.dump();
+			return leftstr + operator + rightstr;
 		}
 
 	}

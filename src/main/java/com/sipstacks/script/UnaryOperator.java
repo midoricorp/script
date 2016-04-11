@@ -14,7 +14,8 @@ abstract class UnaryOperator implements Operation {
 	}
 
 	public String dump() {
-		return operator + " " + right.dump();
+		String rightstr = right==null?"undefined":right.dump();
+		return operator + " " + rightstr;
 	}
 
 }
