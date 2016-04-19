@@ -1,7 +1,11 @@
 # Searle Script
 basic scripting language designed for ChatBots
 
-to Run
+to Compile
+```
+mvn install
+```
+to Run (must compile first)
 ```
 mvn exec:java
 ```
