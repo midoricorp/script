@@ -45,7 +45,7 @@ class ScriptScanner {
 				char c = (char)input;
 
 				if (skipWhiteSpace && 
-					(c == ' ' || c == '\t' || c == '\n')) {
+					(c == ' ' || c == '\t' || c == '\n' || c == '\r')) {
 
 					if ( c == '\n' ) {
 						lineNo++;
@@ -56,7 +56,7 @@ class ScriptScanner {
 
 				skipWhiteSpace = false;
 
-				if (inQuotes && c != '\"') {
+				if (inQuotes && c != '\"' && c != '“' && c != '”')  {
 					if(c == '\\') {
 						input  = pr.read();
 						// end of stream
@@ -67,6 +67,10 @@ class ScriptScanner {
 
 						if (c == '\\') {
 							sb.append('\\');
+						} else if (c == '“') {
+							sb.append('“');
+						} else if (c == '”') {
+							sb.append('”');
 						} else if (c == '\"') {
 							sb.append('\"');
 						} else if (c == 'n') {
@@ -83,13 +87,13 @@ class ScriptScanner {
 					continue;
 				} else if (inQuotes) {
 					// end quote hit, return the token
-					sb.append(c);
+					sb.append('"');
 					return sb.toString();
 				}
 
-				if (!inQuotes && c == '\"') {
+				if (!inQuotes && (c == '\"' || c == '“' || c == '”')) {
 					inQuotes = true;
-					sb.append(c);
+					sb.append('"');
 					continue;
 				}
 
