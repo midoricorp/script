@@ -1277,6 +1277,9 @@ public class Script{
 		}
 
 		public void assign(Object value) throws ScriptParseException {
+			if (value == null) {
+				throw new ScriptParseException("Assign: attempting to assign undefined to " + name);
+			}
 			if (symbolTable.peek().get(name) == null) {
 				throw new ScriptParseException("Undefined variable: " + name);
 			}
