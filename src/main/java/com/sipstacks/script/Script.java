@@ -214,7 +214,10 @@ public class Script{
 		Command cmd;
 		private int totalCalls = 0;
 
-		public ScopedCommand(Command cmd) {
+		public ScopedCommand(Command cmd) throws ScriptParseException {
+			if (cmd == null) {
+				throw new ScriptParseException("Attempting to set Scoped Command to NULL!");
+			}
 			this.cmd = cmd;
 		}
 
