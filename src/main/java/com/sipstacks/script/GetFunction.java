@@ -34,7 +34,7 @@ public class GetFunction extends ExternalFunction {
 		} catch (IOException e) {
 			return e.getMessage();
 		} catch (Exception e) {
-			e.getMessage();
+			return e.getMessage();
 		}
 		return result;
 	}

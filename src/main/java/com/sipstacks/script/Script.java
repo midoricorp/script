@@ -1133,7 +1133,7 @@ public class Script{
 						obj = eval;
 					} else {
 						obj = JSONValue.parse(eval.toString());
-						if (leval instanceof Assignable) {
+						if (leval instanceof Assignable && obj != null) {
 							((Assignable)leval).assign(obj);
 						}
 					}
