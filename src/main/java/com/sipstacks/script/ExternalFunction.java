@@ -21,4 +21,9 @@ public abstract class ExternalFunction implements Statement {
 	public String dump() {
 		return "**Can't dump external functions!**\n";
 	}
+
+	@Override
+	public void getFunctions(List<Function> functions) {
+
+	}
 }
