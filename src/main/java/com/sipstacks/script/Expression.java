@@ -1,6 +1,6 @@
 package com.sipstacks.script;
 
-interface Operation {
+interface Expression {
 	public Object eval() throws ScriptParseException;
 	public String dump();
 }

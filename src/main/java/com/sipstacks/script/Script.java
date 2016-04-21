@@ -1,14 +1,10 @@
 package com.sipstacks.script;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.List;
-import java.util.Stack;
 import java.util.Random;
 import org.json.simple.*;
 import java.util.regex.Pattern;
@@ -22,7 +18,7 @@ public class Script{
 	ScriptScanner scanner;
 	Random random;
 
-	ArrayList<Command> script = new ArrayList<Command>();
+	ArrayList<Statement> script = new ArrayList<Statement>();
 
 	private FunctionListener _functionListener = null;
 
@@ -50,8 +46,8 @@ public class Script{
 		this.loopLimit = limit;
 	}
 
-	private class Expression implements Command {
-		Operation op;
+	private class Expression implements Statement {
+		com.sipstacks.script.Expression op;
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
@@ -65,12 +61,12 @@ public class Script{
 		}
 
 		public Expression() throws ScriptParseException {
-			  ArrayList<Operation> ops = new ArrayList<Operation>();
+			  ArrayList<com.sipstacks.script.Expression> ops = new ArrayList<com.sipstacks.script.Expression>();
 			  String input = null;
 			  while((input=scanner.getToken())!=null){
 				  //System.out.println("Got token '"+input+"'");
 				  if (input.equals(";")) {
-					Operation  op = getOperation(ops);
+					com.sipstacks.script.Expression op = getOperation(ops);
 					this.op = op;
 					return;
 				  }
@@ -95,9 +91,9 @@ public class Script{
 
 	}
 
-	private class Var implements Command {
+	private class Var implements Statement {
 		String name;
-		Operation op;
+		com.sipstacks.script.Expression op;
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
@@ -112,7 +108,7 @@ public class Script{
 		}
 
 		public Var() throws ScriptParseException {
-			  ArrayList<Operation> ops = new ArrayList<Operation>();
+			  ArrayList<com.sipstacks.script.Expression> ops = new ArrayList<com.sipstacks.script.Expression>();
 			  String input = null;
 			  String name = null;
 
@@ -135,7 +131,7 @@ public class Script{
 				  while((input=scanner.getToken())!=null){
 					  //System.out.println("Got token '"+input+"'");
 					  if (input.equals(";")) {
-						Operation  op = getOperation(ops);
+						com.sipstacks.script.Expression op = getOperation(ops);
 
 						if (op == null) {
 							throw new ScriptParseException("Var: missing operation for assignment", scanner);
@@ -172,9 +168,9 @@ public class Script{
 
 	}
 
-	private class FunctionDeclare implements Command {
+	private class FunctionDeclare implements Statement {
 		String func_name;
-		Command cmd;
+		Statement cmd;
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
@@ -191,7 +187,7 @@ public class Script{
 
 
 			this.func_name = scanner.getToken();
-			this.cmd = new ScopedCommand(getCommand());
+			this.cmd = new ScopedStatement(getCommand());
 			if (cmd == null) {
 				throw new ScriptParseException("sub: missing command", scanner);
 			}
@@ -209,14 +205,14 @@ public class Script{
 		}
 	}
 
-	private class ScopedCommand implements Command {
+	private class ScopedStatement implements Statement {
 
-		Command cmd;
+		Statement cmd;
 		private int totalCalls = 0;
 
-		public ScopedCommand(Command cmd) throws ScriptParseException {
+		public ScopedStatement(Statement cmd) throws ScriptParseException {
 			if (cmd == null) {
-				throw new ScriptParseException("Attempting to set Scoped Command to NULL!");
+				throw new ScriptParseException("Attempting to set Scoped Statement to NULL!");
 			}
 			this.cmd = cmd;
 		}
@@ -233,7 +229,7 @@ public class Script{
 
 		public OutputStream exec() throws ScriptParseException {
 			if(loopLimit > 0 && totalCalls > loopLimit) {
-				throw new ScriptParseException("ScopedCommand: recursion depth exceeded. Limit=" + (loopLimit) + " Current=" + totalCalls);
+				throw new ScriptParseException("ScopedStatement: recursion depth exceeded. Limit=" + (loopLimit) + " Current=" + totalCalls);
 			}
 			totalCalls++;
 
@@ -254,10 +250,10 @@ public class Script{
 		}
 	}
 
-	private class If implements Command {
-		Operation op;
-		Command cmd;
-		Command else_cmd;
+	private class If implements Statement {
+		com.sipstacks.script.Expression op;
+		Statement cmd;
+		Statement else_cmd;
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
@@ -286,9 +282,9 @@ public class Script{
 
 		public If() throws ScriptParseException {
 
-			Operation op = null;
-			Command cmd = null;
-			Command else_cmd = null;
+			com.sipstacks.script.Expression op = null;
+			Statement cmd = null;
+			Statement else_cmd = null;
 
 			String token;
 			token = scanner.getToken();
@@ -297,7 +293,7 @@ public class Script{
 				throw new ScriptParseException("If: Expected '('", scanner);
 			}
 
-			ArrayList<Operation> ops = new ArrayList<Operation>();
+			ArrayList<com.sipstacks.script.Expression> ops = new ArrayList<com.sipstacks.script.Expression>();
 
 			int depth = 0;
 
@@ -358,9 +354,9 @@ public class Script{
 		}
 	}
 
-	private class While implements Command {
-		Operation op;
-		Command cmd;
+	private class While implements Statement {
+		com.sipstacks.script.Expression op;
+		Statement cmd;
 
 		private int totalCalls = 0;
 
@@ -390,8 +386,8 @@ public class Script{
 
 		public While() throws ScriptParseException {
 
-			Operation op = null;
-			Command cmd = null;
+			com.sipstacks.script.Expression op = null;
+			Statement cmd = null;
 
 			String token;
 			token = scanner.getToken();
@@ -400,7 +396,7 @@ public class Script{
 				throw new ScriptParseException("While: Expected '('", scanner);
 			}
 
-			ArrayList<Operation> ops = new ArrayList<Operation>();
+			ArrayList<com.sipstacks.script.Expression> ops = new ArrayList<com.sipstacks.script.Expression>();
 
 			int depth = 0;
 
@@ -447,8 +443,8 @@ public class Script{
 		}
 	}
 
-	private class CommandBlock implements Command {
-		ArrayList<Command> commands;
+	private class StatementBlock implements Statement {
+		ArrayList<Statement> statements;
 
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
@@ -456,7 +452,7 @@ public class Script{
 		}
 		public OutputStream exec() throws ScriptParseException {
 			OutputStream os = new OutputStream();
-			for (Command cmd : commands) {
+			for (Statement cmd : statements) {
 				os.append(cmd.exec());
 			}
 			return os;
@@ -466,7 +462,7 @@ public class Script{
 			StringBuffer sb = new StringBuffer();
 			StringBuffer sb2 = new StringBuffer();
 			sb2.append("{\n");
-			for (Command cmd : commands) {
+			for (Statement cmd : statements) {
 				sb2.append(cmd.dump());
 			}
 			String cmdstr = sb2.toString().replaceAll("\n", "\n\t");
@@ -477,13 +473,13 @@ public class Script{
 		}
 
 		public void reset() {
-			for (Command cmd : commands) {
+			for (Statement cmd : statements) {
 				cmd.reset();
 			}
 		}
 
-		public CommandBlock() throws ScriptParseException {
-			ArrayList<Command> commands = new ArrayList<Command>();
+		public StatementBlock() throws ScriptParseException {
+			ArrayList<Statement> statements = new ArrayList<Statement>();
 
 
 			String token;
@@ -504,16 +500,16 @@ public class Script{
 					break;
 				}
 				scanner.pushBack(token);
-				Command cmd = getCommand();
-				commands.add(cmd);
+				Statement cmd = getCommand();
+				statements.add(cmd);
 			}
 
-			this.commands = commands;
+			this.statements = statements;
 		}
 	}
 
-	private class Print implements Command {
-		Operation op;
+	private class Print implements Statement {
+		com.sipstacks.script.Expression op;
 		boolean isHtml;
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
@@ -549,9 +545,9 @@ public class Script{
 
 		public Print() throws ScriptParseException {
 
-			Operation op = null;
+			com.sipstacks.script.Expression op = null;
 
-			ArrayList<Operation> ops = new ArrayList<Operation>();
+			ArrayList<com.sipstacks.script.Expression> ops = new ArrayList<com.sipstacks.script.Expression>();
 
 			boolean first = true;
 
@@ -588,8 +584,8 @@ public class Script{
 		}
 	}
 
-	private class LParen implements Operation {
-		Operation inner;
+	private class LParen implements com.sipstacks.script.Expression {
+		com.sipstacks.script.Expression inner;
 		public Object eval() throws ScriptParseException {
 			if (inner != null) {
 				if (inner instanceof Listable ) {
@@ -611,7 +607,7 @@ public class Script{
 		}
 	}
 
-	private class RParen implements Operation {
+	private class RParen implements com.sipstacks.script.Expression {
 		public Object eval() throws ScriptParseException {
 			throw new ScriptParseException("Trying to eval a ). This shouldn't happen");
 		}
@@ -689,7 +685,7 @@ public class Script{
 		}
 	}
 
-	private class RBracket implements Operation {
+	private class RBracket implements com.sipstacks.script.Expression {
 		public Object eval() throws ScriptParseException {
 			throw new ScriptParseException("Trying to eval a ]. This shouldn't happen");
 		}
@@ -699,9 +695,9 @@ public class Script{
 		}
 	}
 
-	private static abstract class BinaryOperator implements Operation {
-		Operation left;
-		Operation right;
+	private static abstract class BinaryOperator implements com.sipstacks.script.Expression {
+		com.sipstacks.script.Expression left;
+		com.sipstacks.script.Expression right;
 		String operator;
 
 		public Object eval() throws ScriptParseException {
@@ -725,8 +721,8 @@ public class Script{
 
 	}
 
-	private static abstract class PostfixOperator implements Operation {
-		Operation left;
+	private static abstract class PostfixOperator implements com.sipstacks.script.Expression {
+		com.sipstacks.script.Expression left;
 		String operator;
 
 		public Object eval() throws ScriptParseException {
@@ -1185,7 +1181,7 @@ public class Script{
 		}
 	}
 
-	private class Number implements Operation {
+	private class Number implements com.sipstacks.script.Expression {
 		Integer number;
 		
 		public Number(String number) {
@@ -1201,7 +1197,7 @@ public class Script{
 		}
 	}
 
-	private class Rand implements Operation {
+	private class Rand implements com.sipstacks.script.Expression {
 		Integer number;
 		
 		public Rand() {
@@ -1216,7 +1212,7 @@ public class Script{
 		}
 	}
 
-	private class StringLiteral implements Operation {
+	private class StringLiteral implements com.sipstacks.script.Expression {
 		String string;
 		
 		public StringLiteral(String string) {
@@ -1238,7 +1234,7 @@ public class Script{
 		}
 	}
 
-	private static class NoOP implements Operation, Listable {
+	private static class NoOP implements com.sipstacks.script.Expression, Listable {
 		public Object eval() throws ScriptParseException {
 			return "";
 		}
@@ -1253,7 +1249,7 @@ public class Script{
 	}
 
 
-	private class Variable implements Operation, Assignable {
+	private class Variable implements com.sipstacks.script.Expression, Assignable {
 		String name;
 
 		public Variable(String name) {
@@ -1353,7 +1349,7 @@ public class Script{
 		}
 	}
 
-	private Operation tokenToOp(String input) throws ScriptParseException {
+	private com.sipstacks.script.Expression tokenToOp(String input) throws ScriptParseException {
 		  if (input.equals("+")) {
 			return new Add();
 		  } else if(input.equals("-")) {
@@ -1431,7 +1427,7 @@ public class Script{
 		  throw new ScriptParseException("Invalid Operator: '"+input+"'");
 	}
 	
-	private static Operation getOperation(List<Operation> ops) throws ScriptParseException {
+	private static com.sipstacks.script.Expression getOperation(List<com.sipstacks.script.Expression> ops) throws ScriptParseException {
 		return getOperation(ops,0,null);
 	}
 
@@ -1523,7 +1519,7 @@ public class Script{
 
 	}
 
-	private static Operation getOperation(List<Operation> ops, int start, Class terminator) throws ScriptParseException {
+	private static com.sipstacks.script.Expression getOperation(List<com.sipstacks.script.Expression> ops, int start, Class terminator) throws ScriptParseException {
 
 		// sanity check
 
@@ -1534,7 +1530,7 @@ public class Script{
 		// work your way backwards, only have the non-recursive part eval ()
 		if(start == 0) {
 			for (int i = ops.size()-1; i >= 0; i--) {
-				Operation command = ops.get(i);
+				com.sipstacks.script.Expression command = ops.get(i);
 				if (command instanceof LParen) {
 					((LParen)command).inner = getOperation(ops,i+1,RParen.class);
 					ops.remove(i+1);
@@ -1557,7 +1553,7 @@ public class Script{
 			else if (terminator != null) {
 				startPos = ops.size()-1;
 				for (int i = ops.size()-1; i >= start; i--) {
-					Operation command = ops.get(i);
+					com.sipstacks.script.Expression command = ops.get(i);
 					if(terminator.isInstance(command)) {
 						startPos = i-1;
 					}
@@ -1578,7 +1574,7 @@ public class Script{
 						break;
 					}
 				}
-				Operation command = ops.get(i);
+				com.sipstacks.script.Expression command = ops.get(i);
 
 
 				// if start != 0 we are in a (), stop at the )
@@ -1652,7 +1648,7 @@ public class Script{
 
 			if (start < ops.size()) {
 				boolean first = true;
-				for (Operation op : ops.subList(start, ops.size())) {
+				for (com.sipstacks.script.Expression op : ops.subList(start, ops.size())) {
 					if (!first) {
 						list += "and\n";
 					}
@@ -1671,7 +1667,7 @@ public class Script{
 				// might not have been evaluated yet
 				boolean first = true;
 				list += "Full List:\n"; 
-				for (Operation op : ops) {
+				for (com.sipstacks.script.Expression op : ops) {
 					if (!first) {
 						list += "and\n";
 					}
@@ -1687,7 +1683,7 @@ public class Script{
 		if (ops.size() > 1 ) {
 			String list = "";
 			boolean first = true;
-			for (Operation op : ops) {
+			for (com.sipstacks.script.Expression op : ops) {
 				if (!first) {
 					list += "and\n";
 				}
@@ -1719,7 +1715,7 @@ public class Script{
 
 
 
-	private Command getCommand() throws ScriptParseException {
+	private Statement getCommand() throws ScriptParseException {
 		String token = scanner.getToken();
 		if (token == null) {
 		  return null;
@@ -1742,7 +1738,7 @@ public class Script{
 		}
 		if (token.equals("{")) {
 		scanner.pushBack(token);
-		return new CommandBlock();
+		return new StatementBlock();
 		}
 
 		//System.out.println("Pushing back token '" + token + "'");
@@ -1769,7 +1765,7 @@ public class Script{
 
 	public OutputStream run() throws ScriptParseException {
 		OutputStream result = new OutputStream();
-		Command cmd = null;
+		Statement cmd = null;
 
 		while((cmd = getCommand())!=null){
 			result.append(cmd.exec());
@@ -1782,7 +1778,7 @@ public class Script{
 	public String dump() {
 		StringBuffer result = new StringBuffer();
 
-		for(Command cmd : script){
+		for(Statement cmd : script){
 			result.append(cmd.dump());
 		}
 		reset();

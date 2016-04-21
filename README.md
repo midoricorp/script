@@ -58,11 +58,11 @@ All variables are stored as strings, and parsed as integers or JSON as required 
 
 ###Commands
 
-commands should be terminated by ;
+statements should be terminated by ;
 
 
 * var *token* [ = *expr*] - declares *token* as a variable, can also include an assignment
-* {command;*} - command block, allows for several commands to be treated as one command
+* {command;*} - command block, allows for several statements to be treated as one command
 * if (*expression*) command [ else command ]  - executes command if *expression* is true, can have optional else block
 * while (*expression*) command - executes command while *expression* is true
 * get *url* - returns the body of the HTTP response of *url* as a string

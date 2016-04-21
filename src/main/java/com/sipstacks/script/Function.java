@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 class Function extends UnaryOperator implements Cloneable {
 	String name;
-	Command func;
+	Statement func;
 
 	public Object eval() throws ScriptParseException {
 		super.eval();

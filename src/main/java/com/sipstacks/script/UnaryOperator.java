@@ -1,7 +1,7 @@
 package com.sipstacks.script;
 
-abstract class UnaryOperator implements Operation {
-	Operation right;
+abstract class UnaryOperator implements Expression {
+	Expression right;
 	String operator;
 
 	public Object eval() throws ScriptParseException {
