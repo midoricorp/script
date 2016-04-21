@@ -1,5 +1,7 @@
 package com.sipstacks.script;
 
+import java.util.List;
+
 abstract class UnaryOperator implements Expression {
 	Expression right;
 	String operator;
@@ -16,6 +18,13 @@ abstract class UnaryOperator implements Expression {
 	public String dump() {
 		String rightstr = right==null?"undefined":right.dump();
 		return operator + " " + rightstr;
+	}
+
+	@Override
+	public void getFunctions(List<Function> functions) {
+		if (right != null) {
+			right.getFunctions(functions);
+		}
 	}
 
 }

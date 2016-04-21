@@ -2,9 +2,25 @@ package com.sipstacks.script;
 import java.util.List;
 import java.util.ArrayList;
 
-class Function extends UnaryOperator implements Cloneable {
+public class Function extends UnaryOperator implements Cloneable {
 	String name;
-	Statement func;
+	Statement stmt;
+
+	public String getName() {
+		return name;
+	}
+
+	public Statement getStatement() {
+		return stmt;
+	}
+
+	@Override
+	public void getFunctions(List<Function> functions) {
+		if (right != null) {
+			right.getFunctions(functions);
+		}
+		functions.add(this);
+	}
 
 	public Object eval() throws ScriptParseException {
 		super.eval();
@@ -25,12 +41,12 @@ class Function extends UnaryOperator implements Cloneable {
 				strs.add(obj.toString());
 			}
 		}
-		return func.exec(strs);
+		return stmt.exec(strs);
 	}
 
 	public Function clone() {
 		Function f = new Function();
-		f.func = func;
+		f.stmt = stmt;
 		f.name = name;
 		return f;
 	}

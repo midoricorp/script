@@ -6,6 +6,7 @@ public interface Statement {
 	public OutputStream exec(List<String> arg) throws ScriptParseException;
 	public void reset();
 	public String dump();
+	public void getFunctions(List<Function> functions);
 
 }
 

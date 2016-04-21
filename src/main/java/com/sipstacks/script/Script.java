@@ -89,6 +89,8 @@ public class Script{
 			return op.dump() + ";\n";
 		}
 
+		public void getFunctions(List<Function> functions) { op.getFunctions(functions); }
+
 	}
 
 	private class Var implements Statement {
@@ -166,42 +168,56 @@ public class Script{
 			return str;
 		}
 
+		public void getFunctions(List<Function> functions) {
+			op.getFunctions(functions);
+		}
+
 	}
 
 	private class FunctionDeclare implements Statement {
 		String func_name;
 		Statement cmd;
+		boolean local;
 
 		public OutputStream exec(List<String> arg) throws ScriptParseException {
 			return exec();
 		}
 		public OutputStream exec() throws ScriptParseException {
 			Function f = new Function();
-			f.func = cmd;
+			f.stmt = cmd;
 			f.name = func_name;
 			functionTable.put(func_name,f);
 			return new OutputStream(); 
 		}
 
-		public FunctionDeclare() throws ScriptParseException {
+		public FunctionDeclare(boolean local) throws ScriptParseException {
 
 
+			this.local = local;
 			this.func_name = scanner.getToken();
 			this.cmd = new ScopedStatement(getStatement());
 			if (cmd == null) {
 				throw new ScriptParseException("sub: missing statement", scanner);
 			}
 
-			if (_functionListener != null) {
+			if (!local && _functionListener != null) {
 				_functionListener.addFunction(func_name, cmd);
 			}
 
 		}
 
+		public FunctionDeclare() throws ScriptParseException {
+			this(false);
+		}
+
 		public void reset() {}
 
 		public String dump() {
-			return "sub " + func_name + "\n" + cmd.dump() + "\n";
+			return (local?"local ":"") + "sub " + func_name + "\n" + cmd.dump() + "\n";
+		}
+
+		public void getFunctions(List<Function> functions) {
+			cmd.getFunctions(functions);
 		}
 	}
 
@@ -248,6 +264,10 @@ public class Script{
 		public String dump() {
 			return cmd.dump();
 		}
+
+		public void getFunctions(List<Function> functions) {
+			cmd.getFunctions(functions);
+		}
 	}
 
 	private class If implements Statement {
@@ -278,6 +298,16 @@ public class Script{
 			}
 
 			return str;
+		}
+
+		public void getFunctions(List<Function> functions) {
+			op.getFunctions(functions);
+			cmd.getFunctions(functions);
+
+			if (else_cmd != null) {
+				else_cmd.getFunctions(functions);
+			}
+
 		}
 
 		public If() throws ScriptParseException {
@@ -384,6 +414,11 @@ public class Script{
 			return "while (" + op.dump() + ")\n" + cmd.dump();
 		}
 
+		public void getFunctions(List<Function> functions) {
+			op.getFunctions(functions);
+			cmd.getFunctions(functions);
+		}
+
 		public While() throws ScriptParseException {
 
 			com.sipstacks.script.Expression op = null;
@@ -472,6 +507,12 @@ public class Script{
 			return sb.toString();
 		}
 
+		public void getFunctions(List<Function> functions) {
+			for (Statement cmd : statements) {
+				cmd.getFunctions(functions);
+			}
+		}
+
 		public void reset() {
 			for (Statement cmd : statements) {
 				cmd.reset();
@@ -540,6 +581,10 @@ public class Script{
 			return "print " + op.dump() + ";\n";
 		}
 
+		public void getFunctions(List<Function> functions) {
+			op.getFunctions(functions);
+		}
+
 		public void reset() {
 		}
 
@@ -605,6 +650,10 @@ public class Script{
 				return "()";
 			}
 		}
+
+		public void getFunctions(List<Function> functions) {
+			inner.getFunctions(functions);
+		}
 	}
 
 	private class RParen implements com.sipstacks.script.Expression {
@@ -614,6 +663,10 @@ public class Script{
 
 		public String dump() {
 			return ")"; // removed during reduction so no need for implementation, but useful for debugging
+		}
+
+		public void getFunctions(List<Function> functions) {
+
 		}
 	}
 
@@ -683,6 +736,14 @@ public class Script{
 			String rightstr = right==null?"undefined":right.dump();
 			return left.dump() + "[" + rightstr + "]";
 		}
+
+		public void getFunctions(List<Function> functions) {
+			if (right != null) {
+				right.getFunctions(functions);
+			}
+
+			left.getFunctions(functions);
+		}
 	}
 
 	private class RBracket implements com.sipstacks.script.Expression {
@@ -692,6 +753,10 @@ public class Script{
 
 		public String dump() {
 			return "]"; // removed during reduction so no need for implementation but useful for debugging
+		}
+
+		public void getFunctions(List<Function> functions) {
+
 		}
 	}
 
@@ -719,6 +784,17 @@ public class Script{
 			return leftstr + operator + rightstr;
 		}
 
+		@Override
+		public void getFunctions(List<Function> functions) {
+			if (left != null) {
+				left.getFunctions(functions);
+			}
+
+			if (right != null) {
+				right.getFunctions(functions);
+			}
+		}
+
 	}
 
 	private static abstract class PostfixOperator implements com.sipstacks.script.Expression {
@@ -739,7 +815,13 @@ public class Script{
 		}
 
 		public String dump() {
-			return left.dump() + operator;
+			return (left == null ? "undefined" : left.dump()) + operator;
+		}
+
+		public void getFunctions(List<Function> functions) {
+			if (left != null) {
+				left.getFunctions(functions);
+			}
 		}
 
 	}
@@ -1195,6 +1277,11 @@ public class Script{
 		public String dump() {
 			return number.toString();
 		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
+		}
 	}
 
 	private class Rand implements com.sipstacks.script.Expression {
@@ -1209,6 +1296,11 @@ public class Script{
 
 		public String dump() {
 			return " rand ";
+		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
 		}
 	}
 
@@ -1232,6 +1324,11 @@ public class Script{
 			result = result.replace("\t", "\\t");
 			return "\"" + result + "\"";
 		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
+		}
 	}
 
 	private static class NoOP implements com.sipstacks.script.Expression, Listable {
@@ -1245,6 +1342,11 @@ public class Script{
 
 		public String dump() {
 			return "";
+		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
 		}
 	}
 
@@ -1287,6 +1389,11 @@ public class Script{
 
 		public String dump() {
 			return name;
+		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
 		}
 	}
 
@@ -1721,6 +1828,14 @@ public class Script{
 		  return null;
 		}
 
+		if (token.equals("local")) {
+			token = scanner.getToken();
+			if (token.equals("sub")) {
+				return new FunctionDeclare(true);
+			} else {
+				throw new ScriptParseException("local keyword can only be used for sub");
+			}
+		}
 		if (token.equals("while")) {
 		  return new While();
 		}
@@ -1748,7 +1863,14 @@ public class Script{
 
 	public void addExternalFunction(String name, ExternalFunction func) {
 		Function f = new Function();
-		f.func= func;
+		f.stmt = func;
+		f.name = name;
+		functionTable.put(name,f);
+	}
+
+	public void addScriptFunction(String name, Statement func) {
+		Function f = new Function();
+		f.stmt = func;
 		f.name = name;
 		functionTable.put(name,f);
 	}
@@ -1759,7 +1881,7 @@ public class Script{
 
 	public void reset() {
 		for (Function f : functionTable.values()) {
-			f.func.reset();
+			f.stmt.reset();
 		}
 	}
 
@@ -1779,6 +1901,13 @@ public class Script{
 		StringBuffer result = new StringBuffer();
 
 		for(Statement cmd : script){
+			List<Function> funcs = new ArrayList<Function>();
+			cmd.getFunctions(funcs);
+			for(Function func : funcs) {
+				result.append("local sub ");
+				result.append(func.name);
+				result.append(func.stmt.dump());
+			}
 			result.append(cmd.dump());
 		}
 		reset();
