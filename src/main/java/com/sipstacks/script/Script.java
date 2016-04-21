@@ -187,9 +187,9 @@ public class Script{
 
 
 			this.func_name = scanner.getToken();
-			this.cmd = new ScopedStatement(getCommand());
+			this.cmd = new ScopedStatement(getStatement());
 			if (cmd == null) {
-				throw new ScriptParseException("sub: missing command", scanner);
+				throw new ScriptParseException("sub: missing statement", scanner);
 			}
 
 			if (_functionListener != null) {
@@ -324,16 +324,16 @@ public class Script{
 				}
 			}
 
-			cmd = getCommand();
+			cmd = getStatement();
 			if (cmd == null) {
-				throw new ScriptParseException("If: missing command", scanner);
+				throw new ScriptParseException("If: missing statement", scanner);
 			}
 
 			token = scanner.getToken();
 
 			if (token != null ) {
 				if ( token.equals("else") ) {
-					else_cmd = getCommand();
+					else_cmd = getStatement();
 				} else {
 					scanner.pushBack(token);
 				}
@@ -428,9 +428,9 @@ public class Script{
 				}
 			}
 
-			cmd = getCommand();
+			cmd = getStatement();
 			if (cmd == null) {
-				throw new ScriptParseException("While: missing command", scanner);
+				throw new ScriptParseException("While: missing statement", scanner);
 			}
 
 			this.op = op;
@@ -500,7 +500,7 @@ public class Script{
 					break;
 				}
 				scanner.pushBack(token);
-				Statement cmd = getCommand();
+				Statement cmd = getStatement();
 				statements.add(cmd);
 			}
 
@@ -1715,7 +1715,7 @@ public class Script{
 
 
 
-	private Statement getCommand() throws ScriptParseException {
+	private Statement getStatement() throws ScriptParseException {
 		String token = scanner.getToken();
 		if (token == null) {
 		  return null;
@@ -1767,7 +1767,7 @@ public class Script{
 		OutputStream result = new OutputStream();
 		Statement cmd = null;
 
-		while((cmd = getCommand())!=null){
+		while((cmd = getStatement())!=null){
 			result.append(cmd.exec());
 			script.add(cmd);
 		}
