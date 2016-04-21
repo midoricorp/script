@@ -66,7 +66,7 @@ public class Script{
 			  while((input=scanner.getToken())!=null){
 				  //System.out.println("Got token '"+input+"'");
 				  if (input.equals(";")) {
-					com.sipstacks.script.Expression op = getOperation(ops);
+					com.sipstacks.script.Expression op = getExpression(ops);
 					this.op = op;
 					return;
 				  }
@@ -131,7 +131,7 @@ public class Script{
 				  while((input=scanner.getToken())!=null){
 					  //System.out.println("Got token '"+input+"'");
 					  if (input.equals(";")) {
-						com.sipstacks.script.Expression op = getOperation(ops);
+						com.sipstacks.script.Expression op = getExpression(ops);
 
 						if (op == null) {
 							throw new ScriptParseException("Var: missing operation for assignment", scanner);
@@ -308,7 +308,7 @@ public class Script{
 				} else if (token.equals(")")) {
 					// make sure its the RParen we want
 					if (depth == 0) {
-						op = getOperation(ops);			
+						op = getExpression(ops);
 						if (op == null) {
 							throw new ScriptParseException("If: missing op inside ()", scanner);
 						}
@@ -411,7 +411,7 @@ public class Script{
 				} else if (token.equals(")")) {
 					// make sure it's the RParen we want we want
 					if (depth == 0) {
-						op = getOperation(ops);			
+						op = getExpression(ops);
 						if (op == null) {
 							throw new ScriptParseException("While: missing op inside ()", scanner);
 						}
@@ -570,7 +570,7 @@ public class Script{
 				}
 
 				if (token.equals(";")) {
-					op = getOperation(ops);			
+					op = getExpression(ops);
 					break;
 				}
 				
@@ -1427,8 +1427,8 @@ public class Script{
 		  throw new ScriptParseException("Invalid Operator: '"+input+"'");
 	}
 	
-	private static com.sipstacks.script.Expression getOperation(List<com.sipstacks.script.Expression> ops) throws ScriptParseException {
-		return getOperation(ops,0,null);
+	private static com.sipstacks.script.Expression getExpression(List<com.sipstacks.script.Expression> ops) throws ScriptParseException {
+		return getExpression(ops,0,null);
 	}
 
 	private static class OperationSet
@@ -1519,7 +1519,7 @@ public class Script{
 
 	}
 
-	private static com.sipstacks.script.Expression getOperation(List<com.sipstacks.script.Expression> ops, int start, Class terminator) throws ScriptParseException {
+	private static com.sipstacks.script.Expression getExpression(List<com.sipstacks.script.Expression> ops, int start, Class terminator) throws ScriptParseException {
 
 		// sanity check
 
@@ -1532,11 +1532,11 @@ public class Script{
 			for (int i = ops.size()-1; i >= 0; i--) {
 				com.sipstacks.script.Expression command = ops.get(i);
 				if (command instanceof LParen) {
-					((LParen)command).inner = getOperation(ops,i+1,RParen.class);
+					((LParen)command).inner = getExpression(ops,i+1,RParen.class);
 					ops.remove(i+1);
 				}
 				if (command instanceof LBracket) {
-					((LBracket)command).right= getOperation(ops,i+1,RBracket.class);
+					((LBracket)command).right= getExpression(ops,i+1,RBracket.class);
 					ops.remove(i+1);
 				}
 			}
