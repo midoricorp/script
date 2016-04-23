@@ -9,6 +9,8 @@ to Run (must compile first)
 ```
 mvn exec:java
 ```
+If typing a script in by hand, send an EOF when finished by pressing CTRL+D
+
 example apps are in
 ```
 src/main/resources/
