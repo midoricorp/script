@@ -169,7 +169,9 @@ public class Script{
 		}
 
 		public void getFunctions(List<Function> functions) {
-			op.getFunctions(functions);
+			if (op != null) {
+				op.getFunctions(functions);
+			}
 		}
 
 	}
