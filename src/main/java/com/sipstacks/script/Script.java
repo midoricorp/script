@@ -197,7 +197,11 @@ public class Script{
 
 			this.local = local;
 			this.func_name = scanner.getToken();
-			this.cmd = new ScopedStatement(getStatement());
+			try {
+				this.cmd = new ScopedStatement(getStatement());
+			} catch (ScriptParseException e) {
+				throw new ScriptParseException(e.getMessage(), scanner);
+			}
 			if (cmd == null) {
 				throw new ScriptParseException("sub: missing statement", scanner);
 			}
@@ -282,7 +286,7 @@ public class Script{
 		}
 		public OutputStream exec() throws ScriptParseException {
 			OutputStream os = new OutputStream();
-			if (parseInteger(op.eval().toString()) != 0) {
+			if (parseBoolean(op.eval().toString())) {
 				os.append(cmd.exec());
 			}
 			else if (else_cmd != null) {
@@ -398,7 +402,7 @@ public class Script{
 		public OutputStream exec() throws ScriptParseException {
 			OutputStream os = new OutputStream();
 			int counter = 0;
-			while (parseInteger(op.eval().toString()) != 0) {
+			while (parseBoolean(op.eval().toString())) {
 				if(loopLimit > 0 && counter > loopLimit) {
 					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter + " Condition=" + op.eval());
 				}
@@ -1070,7 +1074,7 @@ public class Script{
 
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			boolean result = (parseInteger(left.eval().toString()) != 0) && (parseInteger(right.eval().toString()) != 0);
+			boolean result = parseBoolean(left.eval().toString()) && parseBoolean(right.eval().toString());
 			return result?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
@@ -1083,7 +1087,7 @@ public class Script{
 
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			boolean result = (parseInteger(left.eval().toString()) != 0) || (parseInteger(right.eval().toString()) != 0);
+			boolean result = parseBoolean(left.eval().toString()) || parseBoolean(right.eval().toString());
 			return result?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
@@ -1120,7 +1124,7 @@ public class Script{
 
 		public Object eval() throws ScriptParseException {
 			super.eval();
-			return parseInteger(right.eval().toString()) == 0?Integer.valueOf("1"):Integer.valueOf("0");
+			return (!parseBoolean(right.eval().toString()))?Integer.valueOf("1"):Integer.valueOf("0");
 		}
 	}
 
@@ -1822,6 +1826,18 @@ public class Script{
 		}
 	}
 
+	private boolean parseBoolean(String val) throws ScriptParseException {
+		if (val.equals("")) {
+			return false;
+		}
+
+		try {
+			return Integer.parseInt(val) != 0;
+		} catch (NumberFormatException e) {
+			// any string that is non empty and isn't a number is true
+			return true;
+		}
+	}
 
 
 	private Statement getStatement() throws ScriptParseException {
@@ -1835,7 +1851,7 @@ public class Script{
 			if (token.equals("sub")) {
 				return new FunctionDeclare(true);
 			} else {
-				throw new ScriptParseException("local keyword can only be used for sub");
+				throw new ScriptParseException("local keyword can only be used for sub", scanner);
 			}
 		}
 		if (token.equals("while")) {

@@ -1,2 +1,19 @@
 print "Excpect 0 " . (1 && 0 || 1 && 0);
 print "Expect 1 " . (1 && 0 || 1 && 1);
+print "Expect 0 " . ("Hello" && "");
+print "Expect 1 " . ("Hello" || "");
+print "Expect 0 " . (!"Hello");
+print "Expect 1 " . (!"");
+
+
+if ("" ) {
+    print "Fail: \"\" == false";
+} else {
+    print "Pass: \"\" == false";
+}
+
+if ("hello" ) {
+    print "Pass: \"hello\" == true";
+} else {
+    print "Fail: \"hello\" == true";
+}
