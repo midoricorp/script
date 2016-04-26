@@ -1,7 +1,7 @@
 package com.sipstacks.script;
 import java.util.List;
 
-public abstract class ExternalFunction implements Statement {
+public abstract class ExternalCommand implements Statement {
 	
 	abstract public String run(List<String> args);
 

@@ -2,7 +2,7 @@ package com.sipstacks.script;
 import java.util.List;
 
 
-public class HtmlEncodeFunction extends ExternalFunction {
+public class HtmlEncodeFunction extends ExternalCommand {
 	
 	public String run(List<String> args) {
 		String result = "";

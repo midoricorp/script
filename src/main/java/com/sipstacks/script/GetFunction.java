@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 
-public class GetFunction extends ExternalFunction {
+public class GetFunction extends ExternalCommand {
 	
 	public String run(List<String> args) {
 		URL url;

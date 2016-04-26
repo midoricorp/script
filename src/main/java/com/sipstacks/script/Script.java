@@ -37,9 +37,11 @@ public class Script{
 		scanner = new ScriptScanner(in);
 		random = new Random();
 		loopLimit = -1; // default no limit
-		addExternalFunction("get", new GetFunction());
-		addExternalFunction("html_encode", new HtmlEncodeFunction());
-		addExternalFunction("url_encode", new UrlEncodeFunction());
+		addStatementFunction("get", new GetFunction());
+		addStatementFunction("html_encode", new HtmlEncodeFunction());
+		addStatementFunction("url_encode", new UrlEncodeFunction());
+		addFunction(new SplitFunction());
+		addFunction(new JoinFunction());
 	}
 
 	public void setLoopLimit(int limit) {
@@ -185,7 +187,7 @@ public class Script{
 			return exec();
 		}
 		public OutputStream exec() throws ScriptParseException {
-			Function f = new Function();
+			StatementFunction f = new StatementFunction();
 			f.stmt = cmd;
 			f.name = func_name;
 			functionTable.put(func_name,f);
@@ -1879,18 +1881,15 @@ public class Script{
 		return new Expression();
 	}
 
-	public void addExternalFunction(String name, ExternalFunction func) {
-		Function f = new Function();
+	public void addStatementFunction(String name, Statement func) {
+		StatementFunction f = new StatementFunction();
 		f.stmt = func;
 		f.name = name;
-		functionTable.put(name,f);
+		addFunction(f);
 	}
 
-	public void addScriptFunction(String name, Statement func) {
-		Function f = new Function();
-		f.stmt = func;
-		f.name = name;
-		functionTable.put(name,f);
+	public void addFunction(Function func) {
+		functionTable.put(func.getName(),func);
 	}
 
 	public void addFunctionListener(FunctionListener listener) {
@@ -1899,7 +1898,7 @@ public class Script{
 
 	public void reset() {
 		for (Function f : functionTable.values()) {
-			f.stmt.reset();
+			f.reset();
 		}
 	}
 
@@ -1922,9 +1921,12 @@ public class Script{
 			List<Function> funcs = new ArrayList<Function>();
 			cmd.getFunctions(funcs);
 			for(Function func : funcs) {
-				result.append("local sub ");
-				result.append(func.name);
-				result.append(func.stmt.dump());
+				if(func instanceof StatementFunction) {
+					StatementFunction stmtFunc = (StatementFunction)func;
+					result.append("local sub ");
+					result.append(stmtFunc.name);
+					result.append(stmtFunc.stmt.dump());
+				}
 			}
 			result.append(cmd.dump());
 		}

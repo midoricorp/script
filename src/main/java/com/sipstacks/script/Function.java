@@ -4,17 +4,11 @@ import java.util.ArrayList;
 
 public class Function extends UnaryOperator implements Cloneable {
 	String name;
-	Statement stmt;
 
 	public String getName() {
 		return name;
 	}
 
-	public Statement getStatement() {
-		return stmt;
-	}
-
-	@Override
 	public void getFunctions(List<Function> functions) {
 		if (right != null) {
 			right.getFunctions(functions);
@@ -22,8 +16,21 @@ public class Function extends UnaryOperator implements Cloneable {
 		functions.add(this);
 	}
 
-	public Object eval() throws ScriptParseException {
-		super.eval();
+	public Function clone() {
+		Function f = new Function();
+		f.name = name;
+		return f;
+	}
+
+	public String dump() {
+		String rightstr = right==null?"()":right.dump();
+		return name + " " + rightstr;
+	}
+
+	public void reset() {
+	}
+
+	public List<String> getParamStrings() throws ScriptParseException {
 		List<String> strs = new ArrayList<String>();
 		if (right instanceof Listable) {
 			List<Object> objs = ((Listable)right).getList();
@@ -41,18 +48,22 @@ public class Function extends UnaryOperator implements Cloneable {
 				strs.add(obj.toString());
 			}
 		}
-		return stmt.exec(strs);
+		return strs;
 	}
 
-	public Function clone() {
-		Function f = new Function();
-		f.stmt = stmt;
-		f.name = name;
-		return f;
-	}
-
-	public String dump() {
-		String rightstr = right==null?"()":right.dump();
-		return name + " " + rightstr;
+	public List<Object> getParamObjects() throws ScriptParseException {
+		List<Object> objs;
+		if (right instanceof Listable) {
+			objs = ((Listable)right).getList();
+		} else {
+			Object obj = right.eval();
+			if (obj instanceof List) {
+				objs = (List<Object>)obj;
+			} else {
+				objs = new ArrayList<Object>();
+				objs.add(obj.toString());
+			}
+		}
+		return objs;
 	}
 }

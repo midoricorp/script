@@ -4,7 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 
-public class UrlEncodeFunction extends ExternalFunction {
+public class UrlEncodeFunction extends ExternalCommand {
 	
 	public String run(List<String> args) {
 		String result = "";
