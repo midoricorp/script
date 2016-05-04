@@ -21,15 +21,23 @@ public class JoinFunction extends Function implements Cloneable {
             return "join(): must specify delimiter";
         }
 
+        System.err.println("Num args: " + objs.size());
         delimiter = objs.get(0).toString();
 
         for (int i = 1; i < objs.size(); i++) {
-            if (objs.size() > 1) {
-                if (objs.get(1) instanceof List) {
-                    list.addAll((List<Object>) objs.get(i));
-                } else {
-                    list.add(objs.get(i));
-                }
+            Object o = objs.get(i);
+            if (o instanceof Assignable) {
+                o = ((Assignable)o).getValue();
+            }
+            if (o instanceof List && i == 1) {
+                // if 2nd parameter is a list, just use that
+                System.err.println("List found, using it!");
+                list.addAll((List<Object>) o);
+                break;
+            } else {
+                // else treat the remaining parameters as the list
+                System.err.println("param list found");
+                list.add(o);
             }
         }
 

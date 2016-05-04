@@ -42,6 +42,9 @@ public class Script{
 		addStatementFunction("url_encode", new UrlEncodeFunction());
 		addFunction(new SplitFunction());
 		addFunction(new JoinFunction());
+		addFunction(new ShiftFunction());
+		addFunction(new PopFunction());
+
 	}
 
 	public void setLoopLimit(int limit) {
@@ -699,6 +702,9 @@ public class Script{
 						obj = eval;
 					} else {
 						obj = JSONValue.parse(eval.toString());
+						if (obj == null) {
+							throw new ScriptParseException("[] expected array as lval\nGot: " + left.eval().toString());
+						}
 						if (leval instanceof Assignable) {
 							((Assignable)leval).assign(obj);
 						}

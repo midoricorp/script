@@ -1,0 +1,21 @@
+var strlist = "[1,2,3]";
+print "Expected: 1 Got: " . shift(strlist);
+print "Expected: [2,3] Got: " . strlist;
+print "Expected: 2 Got: " . shift(strlist);
+print "Expected: 3 Got: " . shift(strlist);
+print "Expected: [] Got: " . strlist;
+print "Expected:  Got: " . shift(strlist);
+var list = (1,2,3);
+print "Expected: 1 Got: " . shift(list);
+print "Expected: [2,3] Got: " . list;
+
+strlist = "[1,2,3]";
+print "Expected: 3 Got: " . pop(strlist);
+print "Expected: [1,2] Got: " . strlist;
+print "Expected: 2 Got: " . pop(strlist);
+print "Expected: 1 Got: " . pop(strlist);
+print "Expected: [] Got: " . strlist;
+print "Expected:  Got: " . pop(strlist);
+list = (1,2,3);
+print "Expected: 3 Got: " . pop(list);
+print "Expected: [1,2] Got: " .list;
