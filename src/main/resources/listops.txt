@@ -19,3 +19,18 @@ print "Expected:  Got: " . pop(strlist);
 list = (1,2,3);
 print "Expected: 3 Got: " . pop(list);
 print "Expected: [1,2] Got: " .list;
+
+strlist = "[3,4]";
+print "Expected: [1,2,3,4] Got: " . unshift(strlist,1,2);
+unshift(strlist,0);
+print "Expected: [0,1,2,3,4] Got: " . strlist;
+list = (3,4);
+print "Expected: [1,2,3,4] Got: " . unshift(list,1,2);
+
+strlist = "[1,2]";
+print "Expected: [1,2,3,4] Got: " . push(strlist,3,4);
+push(strlist,5);
+print "Expected: [1,2,3,4,5] Got: " . strlist;
+list=(1,2);
+print "Expected: [1,2,3,4] Got: " . push(list,3,4);
+

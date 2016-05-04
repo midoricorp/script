@@ -44,6 +44,9 @@ public class Script{
 		addFunction(new JoinFunction());
 		addFunction(new ShiftFunction());
 		addFunction(new PopFunction());
+		addFunction(new PushFunction());
+		addFunction(new UnshiftFunction());
+
 
 	}
 

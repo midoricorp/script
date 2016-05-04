@@ -101,5 +101,10 @@ There are some functions built directly into the language
 
 
 * split( string, [expression] ) - splits a string based on the regex, if regex is omitted the default is "\\s+"
-
 * join( delimiter, [list | arg ]+ ) - will join all elements of all specifed lists and arguments with the specified delimiter
+
+* push( list, [arg]+ ) - adds each argument to the end of the list, returns the list
+* unshift( list, [args]+ ) - adds the list of args to the font of the list, the args keep in the same order that they apper in unshift() (not reversed), returns the list
+
+* shift( list ) - removes the first element from the list and returns it
+* pop( list ) - removes the last element from the list and returns it
