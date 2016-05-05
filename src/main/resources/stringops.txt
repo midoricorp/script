@@ -5,3 +5,8 @@ print "Expected: 1 2 3 Got: " . join(" ", 1, 2, 3);
 var list = "[1, 2, 3]";
 print "Expected: 1 2 3 Got: " . join(" ", list);
 
+
+list = split("This is a test!");
+print "Expected: [\"This\", \"is\", \"a\", \"test\"] Got: " . list;
+list = split("BaaDabEbF", "[ab]+");
+print "Expected: [\"B\", \"D\", \"E\", \"F\"] Got: " . list;
