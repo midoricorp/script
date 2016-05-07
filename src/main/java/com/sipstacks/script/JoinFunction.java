@@ -29,14 +29,21 @@ public class JoinFunction extends Function implements Cloneable {
             if (o instanceof Assignable) {
                 Assignable assignable = ((Assignable) o);
                 o = assignable.getValue();
-                if (!(o instanceof List)) {
-                    Object listObject = JSONValue.parse(o.toString());
-                    if (listObject != null) {
-                        assignable.assign(listObject);
-                        o = listObject;
-                    }
+            }
+
+            if (o instanceof ObjectReference) {
+                ObjectReference reference = (ObjectReference)o;
+                reference.toJSON();
+                o = reference.getReference();
+            }
+
+            if (!(o instanceof List)) {
+                Object listObject = JSONValue.parse(o.toString());
+                if (listObject != null) {
+                    o = listObject;
                 }
             }
+
             if (o instanceof List && i == 1) {
                 // if 2nd parameter is a list, just use that
                 list.addAll((List<Object>) o);

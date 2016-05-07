@@ -112,7 +112,12 @@ public class Script{
 			if (op == null) {
 				symbolTable.peek().put(name, "");
 			} else {
-				symbolTable.peek().put(name, op.eval());
+				Object eval = op.eval();
+				if (eval instanceof Assignable || eval instanceof ObjectReference) {
+					symbolTable.peek().put(name, eval);
+				} else {
+					symbolTable.peek().put(name, new ObjectReference(eval));
+				}
 			}
 			return new OutputStream();
 		}
@@ -693,32 +698,27 @@ public class Script{
 				Object leval;
 
 				Object init(Object leval, int index) throws ScriptParseException {
-					Object eval = null;
+					ObjectReference eval = null;
+					Object obj = leval;
 					if (leval instanceof Assignable) {
-						eval = ((Assignable)leval).getValue();
-					} else {
-						eval = leval;
+						obj = ((Assignable)leval).getValue();
 					}
 
-					Object obj=null;
-					if ( eval instanceof JSONArray) {
-						obj = eval;
+					if (obj instanceof ObjectReference){
+						eval = (ObjectReference)obj;
 					} else {
-						obj = JSONValue.parse(eval.toString());
-						if (obj == null) {
-							throw new ScriptParseException("[] expected array as lval\nGot: " + left.eval().toString());
-						}
-						if (leval instanceof Assignable) {
-							((Assignable)leval).assign(obj);
-						}
+						eval = new ObjectReference(obj);
 					}
 
-					if ( obj instanceof JSONArray) {
-						this.arr = (JSONArray)obj;
-					}
-					else {
+					if (eval.toJSON() == null) {
 						throw new ScriptParseException("[] expected array as lval\nGot: " + left.eval().toString());
 					}
+
+					if (!(eval.getReference() instanceof JSONArray)) {
+						throw new ScriptParseException("[] expected array as lval\nGot a map: " + left.eval().toString());
+					}
+
+					this.arr = (JSONArray)eval.getReference();
 
 					if ( index >= arr.size()) {
 						throw new ScriptParseException("[] index " + index + " is out of bounds of defined array of size " + arr.size());
@@ -1153,6 +1153,19 @@ public class Script{
 				eval = ((Assignable)eval).getValue();
 			}
 
+			if (eval instanceof ObjectReference) {
+				ObjectReference reference = (ObjectReference)eval;
+				reference.toJSON();
+				eval = reference.getReference();
+			}
+
+			if (eval instanceof JSONObject) {
+				JSONArray keys = new JSONArray();
+				keys.addAll(((JSONObject)eval).keySet());
+				return keys;
+
+			}
+
 			if (eval instanceof JSONArray) {
 				return Integer.valueOf(((JSONArray)eval).size());
 
@@ -1176,12 +1189,23 @@ public class Script{
 			super.eval();
 			Object eval = right.eval();
 
+			if (eval instanceof Assignable) {
+				eval = ((Assignable) eval).getValue();
+			}
+
+			if (eval instanceof ObjectReference) {
+				ObjectReference reference = (ObjectReference)eval;
+				reference.toJSON();
+				eval = reference.getReference();
+			}
+
 			if (eval instanceof JSONObject) {
 				JSONArray keys = new JSONArray();	
 				keys.addAll(((JSONObject)eval).keySet());
 				return keys;
 
 			}
+
 			eval=JSONValue.parse(eval.toString());
 
 			if ( eval != null && eval instanceof JSONObject) {
@@ -1219,29 +1243,28 @@ public class Script{
 				Object leval;
 
 				Object init(Object leval, String key) throws ScriptParseException {
-					Object eval = null;
+
+					ObjectReference eval = null;
+					Object obj = leval;
 					if (leval instanceof Assignable) {
-						eval = ((Assignable)leval).getValue();
-					} else {
-						eval = leval;
+						obj = ((Assignable)leval).getValue();
 					}
 
-					Object obj=null;
-					if (eval instanceof JSONObject) {
-						obj = eval;
+					if (obj instanceof ObjectReference){
+						eval = (ObjectReference)obj;
 					} else {
-						obj = JSONValue.parse(eval.toString());
-						if (leval instanceof Assignable && obj != null) {
-							((Assignable)leval).assign(obj);
-						}
+						eval = new ObjectReference(obj);
 					}
 
-					if (obj instanceof JSONObject) {
-						this.map= (JSONObject)obj;
-					}
-					else {
+					if (eval.toJSON() == null) {
 						throw new ScriptParseException("-> expected map as lval\nGot: " + left.eval().toString());
 					}
+
+					if (!(eval.getReference() instanceof JSONObject)) {
+						throw new ScriptParseException("-> expected map as lval\nGot: " + left.eval().toString());
+					}
+
+					this.map = (JSONObject)eval.getReference();
 
 					this.leval = leval;
 					this.key = key;
@@ -1401,7 +1424,13 @@ public class Script{
 			if (symbolTable.peek().get(name) == null) {
 				throw new ScriptParseException("Undefined variable: " + name);
 			}
-			symbolTable.peek().put(name, value);
+
+			if (value instanceof ObjectReference || value instanceof Assignable) {
+				symbolTable.peek().put(name, value);
+			} else {
+				symbolTable.peek().put(name, new ObjectReference(value));
+			}
+
 		}
 
 		public String dump() {
