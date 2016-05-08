@@ -2,6 +2,7 @@ var list = (1,2,3);
 print "Expected: 1 2 3 Got: " . join(" ", list);
 print "Expected: 1 2 3 Got: " . join(" ", (1,2,3));
 print "Expected: 1 2 3 Got: " . join(" ", 1, 2, 3);
+print "Expected: 1 2 3 Got: " . join(" ", "[1, 2, 3]");
 var list = "[1, 2, 3]";
 print "Expected: 1 2 3 Got: " . join(" ", list);
 

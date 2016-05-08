@@ -38,6 +38,7 @@ public class Script{
 		random = new Random();
 		loopLimit = -1; // default no limit
 		addStatementFunction("get", new GetFunction());
+		addFunction(new PostFunction());
 		addStatementFunction("html_encode", new HtmlEncodeFunction());
 		addStatementFunction("url_encode", new UrlEncodeFunction());
 		addFunction(new SplitFunction());
@@ -1866,7 +1867,7 @@ public class Script{
 		}
 	}
 
-	private boolean parseBoolean(String val) throws ScriptParseException {
+	public static boolean parseBoolean(String val) throws ScriptParseException {
 		if (val.equals("")) {
 			return false;
 		}

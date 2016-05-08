@@ -68,6 +68,7 @@ statements should be terminated by ;
 * if (*expression*) command [ else command ]  - executes command if *expression* is true, can have optional else block
 * while (*expression*) command - executes command while *expression* is true
 * get *url* - returns the body of the HTTP response of *url* as a string
+* post( *url*[, *map* [, *use_json*]]) - sends a post to *url*, map is a json map, by default will be converted into a form urlencoded string.  If *use_json* is present and set to 1, then the map will be sent as a json object.
 * *expression* - expressions such as i++;
 * sub *token* command - declares *token* as a function
 
