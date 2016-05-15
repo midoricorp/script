@@ -18,6 +18,17 @@ public class Script{
 	ScriptScanner scanner;
 	Random random;
 
+	/**
+	 * These counters are used during parsing to make sure break, continue
+	 * and return are only used in legal places
+	 */
+	private class StatementCounters {
+		int numWhile = 0;
+		int numSub = 0;
+	}
+
+	StatementCounters stmtCounters = new StatementCounters();
+
 	ArrayList<Statement> script = new ArrayList<Statement>();
 
 	private FunctionListener _functionListener = null;
@@ -58,15 +69,14 @@ public class Script{
 	private class Expression implements Statement {
 		com.sipstacks.script.Expression op;
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			// allow expression to be just a ;
 			if (op != null) {
 				op.eval();
 			}
-			return new OutputStream(); 
 		}
 
 		public Expression() throws ScriptParseException {
@@ -102,14 +112,119 @@ public class Script{
 
 	}
 
+	private class Break implements Statement {
+
+		public Break() throws ScriptParseException {
+			String input = scanner.getToken();
+
+			if(!input.equals(";")) {
+				throw new ScriptParseException("Break: expected ; got " + input, scanner);
+			}
+		}
+		@Override
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
+			throw new ScriptBreakFlowException();
+		}
+
+		@Override
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
+		}
+
+		@Override
+		public void reset() {
+
+		}
+
+		@Override
+		public String dump() {
+			return "break;\n";
+		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
+		}
+	}
+
+	private class Continue implements Statement {
+
+		public Continue() throws ScriptParseException {
+			String input = scanner.getToken();
+
+			if(!input.equals(";")) {
+				throw new ScriptParseException("Continue: expected ; got " + input, scanner);
+			}
+		}
+		@Override
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
+			throw new ScriptContinueFlowException();
+		}
+
+		@Override
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
+		}
+
+		@Override
+		public void reset() {
+
+		}
+
+		@Override
+		public String dump() {
+			return "continue;\n";
+		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
+		}
+	}
+
+	private class Return implements Statement {
+
+		public Return() throws ScriptParseException {
+			String input = scanner.getToken();
+
+			if(!input.equals(";")) {
+				throw new ScriptParseException("Return: expected ; got " + input, scanner);
+			}
+		}
+		@Override
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
+			throw new ScriptReturnFlowException();
+		}
+
+		@Override
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
+		}
+
+		@Override
+		public void reset() {
+
+		}
+
+		@Override
+		public String dump() {
+			return "return;\n";
+		}
+
+		@Override
+		public void getFunctions(List<Function> functions) {
+
+		}
+	}
+
 	private class Var implements Statement {
 		String name;
 		com.sipstacks.script.Expression op;
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+				exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			if (op == null) {
 				symbolTable.peek().put(name, "");
 			} else {
@@ -120,7 +235,6 @@ public class Script{
 					symbolTable.peek().put(name, new ObjectReference(eval));
 				}
 			}
-			return new OutputStream();
 		}
 
 		public Var() throws ScriptParseException {
@@ -195,15 +309,14 @@ public class Script{
 		Statement cmd;
 		boolean local;
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			StatementFunction f = new StatementFunction();
 			f.stmt = cmd;
 			f.name = func_name;
 			functionTable.put(func_name,f);
-			return new OutputStream(); 
 		}
 
 		public FunctionDeclare(boolean local) throws ScriptParseException {
@@ -212,7 +325,9 @@ public class Script{
 			this.local = local;
 			this.func_name = scanner.getToken();
 			try {
+				stmtCounters.numSub++;
 				this.cmd = new ScopedStatement(getStatement());
+				stmtCounters.numSub--;
 			} catch (ScriptParseException e) {
 				throw new ScriptParseException(e.getMessage(), scanner);
 			}
@@ -253,27 +368,31 @@ public class Script{
 			this.cmd = cmd;
 		}
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			OutputStream result;
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
 			enterScope();
 			int i = 0;
 			symbolTable.peek().put("_", JSONValue.toJSONString(arg));
-		       	result = cmd.exec();
+			try {
+				cmd.exec(os);
+			} catch (ScriptReturnFlowException e) {
+				// somebody called return, consume it and return
+			}
 			exitScope();
-			return result;
 		}
 
-		public OutputStream exec() throws ScriptParseException {
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			if(loopLimit > 0 && totalCalls > loopLimit) {
 				throw new ScriptParseException("ScopedStatement: recursion depth exceeded. Limit=" + (loopLimit) + " Current=" + totalCalls);
 			}
 			totalCalls++;
 
-			OutputStream result;
 			enterScope();
-		       	result = cmd.exec();
+			try {
+				cmd.exec(os);
+			} catch (ScriptReturnFlowException e) {
+				// somebody called return, consume it and return
+			}
 			exitScope();
-			return result;
 		}
 
 		public void reset() {
@@ -295,19 +414,16 @@ public class Script{
 		Statement cmd;
 		Statement else_cmd;
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
-			OutputStream os = new OutputStream();
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			if (parseBoolean(op.eval().toString())) {
-				os.append(cmd.exec());
+				cmd.exec(os);
 			}
 			else if (else_cmd != null) {
-				os.append(else_cmd.exec());
+				else_cmd.exec(os);
 			}
-
-			return os;
 		}
 
 		public String dump() {
@@ -410,11 +526,10 @@ public class Script{
 
 		private int totalCalls = 0;
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
-			OutputStream os = new OutputStream();
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			int counter = 0;
 			while (parseBoolean(op.eval().toString())) {
 				if(loopLimit > 0 && counter > loopLimit) {
@@ -423,11 +538,16 @@ public class Script{
 				if(loopLimit > 0 && totalCalls > loopLimit*loopLimit) {
 					throw new ScriptParseException("While: nested loop count exceeded. Limit=" + (loopLimit*loopLimit) + " Current=" + totalCalls);
 				}
-				os.append(cmd.exec());
+				try {
+					cmd.exec(os);
+				} catch (ScriptBreakFlowException e) {
+					break;
+				} catch (ScriptContinueFlowException e) {
+					// swallow and continue looping
+				}
 				counter++;
 				totalCalls++;
 			}
-			return os;
 		}
 
 		public String dump() {
@@ -483,7 +603,10 @@ public class Script{
 				}
 			}
 
+			stmtCounters.numWhile++;
 			cmd = getStatement();
+			stmtCounters.numWhile--;
+
 			if (cmd == null) {
 				throw new ScriptParseException("While: missing statement", scanner);
 			}
@@ -502,15 +625,13 @@ public class Script{
 		ArrayList<Statement> statements;
 
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
-			OutputStream os = new OutputStream();
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			for (Statement cmd : statements) {
-				os.append(cmd.exec());
+				cmd.exec(os);
 			}
-			return os;
 		}
 
 		public String dump() {
@@ -573,11 +694,10 @@ public class Script{
 		com.sipstacks.script.Expression op;
 		boolean isHtml;
 
-		public OutputStream exec(List<String> arg) throws ScriptParseException {
-			return exec();
+		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
+			exec(os);
 		}
-		public OutputStream exec() throws ScriptParseException {
-			OutputStream os = new OutputStream();
+		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			if (op != null) {
 				if (isHtml) {
 					os.appendHtml(op.eval().toString() + "\n");
@@ -591,7 +711,6 @@ public class Script{
 					os.appendText("\n");
 				}
 			}
-			return os;
 		}
 
 		public String dump() {
@@ -1898,6 +2017,27 @@ public class Script{
 		if (token.equals("while")) {
 		  return new While();
 		}
+		if (token.equals("break")) {
+			if (stmtCounters.numWhile > 0) {
+				return new Break();
+			} else {
+				throw new ScriptParseException("break called outside while loop", scanner);
+			}
+		}
+		if (token.equals("continue")) {
+			if (stmtCounters.numWhile > 0) {
+				return new Continue();
+			} else {
+				throw new ScriptParseException("continue called outside while loop", scanner);
+			}
+		}
+		if (token.equals("return")) {
+			if (stmtCounters.numSub > 0) {
+				return new Return();
+			} else {
+				throw new ScriptParseException("return called outside a sub declariation", scanner);
+			}
+		}
 		if (token.equals("sub")) {
 		  return new FunctionDeclare();
 		}
@@ -1946,7 +2086,11 @@ public class Script{
 		Statement cmd = null;
 
 		while((cmd = getStatement())!=null){
-			result.append(cmd.exec());
+			try {
+				cmd.exec(result);
+			} catch (ScriptFlowException e) {
+				throw new ScriptParseException(e.getMessage());
+			}
 			script.add(cmd);
 		}
 		reset();

@@ -1,6 +1,5 @@
 package com.sipstacks.script;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,7 +16,13 @@ public class StatementFunction extends Function implements Cloneable  {
         super.eval();
         List<String> strs = getParamStrings();
 
-        return stmt.exec(strs);
+        try {
+            OutputStream result = new OutputStream();
+            stmt.exec(result, strs);
+            return result;
+        } catch (ScriptFlowException e) {
+            throw new ScriptParseException(e.getMessage());
+        }
     }
 
     public StatementFunction clone() {

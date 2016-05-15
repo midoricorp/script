@@ -57,16 +57,20 @@ All variables are stored as strings, and parsed as integers or JSON as required 
 * rand - returns a random positive integer
 * *variable* - if declared with var, evaluates to it's curent value
 
+###Flow Control
+* if (*expression*) statement [ else statement ]  - executes command if *expression* is true, can have optional else block
+* while (*expression*) statement - executes command while *expression* is true
+* {[statement;]*} - statement block, allows for several statements to be treated as one statement
 
-###Commands
+* continue; - return back to the beginning of a while loop
+* break; - exit from the while loop
+* return; - exit from a sub command
+
+###Statements
 
 statements should be terminated by ;
 
-
 * var *token* [ = *expr*] - declares *token* as a variable, can also include an assignment
-* {command;*} - command block, allows for several statements to be treated as one command
-* if (*expression*) command [ else command ]  - executes command if *expression* is true, can have optional else block
-* while (*expression*) command - executes command while *expression* is true
 * get *url* - returns the body of the HTTP response of *url* as a string
 * post( *url*[, *map* [, *use_json*]]) - sends a post to *url*, map is a json map, by default will be converted into a form urlencoded string.  If *use_json* is present and set to 1, then the map will be sent as a json object.
 * *expression* - expressions such as i++;

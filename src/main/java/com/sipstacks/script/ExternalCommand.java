@@ -5,15 +5,11 @@ public abstract class ExternalCommand implements Statement {
 	
 	abstract public String run(List<String> args);
 
-	public OutputStream exec() throws ScriptParseException {
-		OutputStream os = new OutputStream();
+	public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 		os.appendText(run(null));
-		return os;
 	}
-	public OutputStream exec(List<String> args) throws ScriptParseException {
-		OutputStream os = new OutputStream();
+	public void exec(OutputStream os, List<String> args) throws ScriptParseException, ScriptFlowException {
 		os.appendText(run(args));
-		return os;
 	}
 
 	public void reset() {}
