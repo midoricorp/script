@@ -11,3 +11,10 @@ sub test
 }
 print "This is " . (test());
 
+local sub returntest {
+	print "PASS: before break";
+	return;
+	print "FAIL: after break";
+}
+
+print returntest();
