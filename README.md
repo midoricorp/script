@@ -129,5 +129,6 @@ HOUR_24|the hour in 24 hour format (0-23)
 MINUTE|the minute of the hour
 SECOND|the seconds of the minute
 WEEK_OF_YEAR|the current week of the year (1-52)
+DAY_OF_WEEK|Day of the week 1=Sunday to 7=Saturday
 
 

@@ -43,6 +43,7 @@ public class GmTime  extends Function implements Cloneable {
         result.put("MINUTE", calendar.get(Calendar.MINUTE));
         result.put("SECOND", calendar.get(Calendar.SECOND));
         result.put("WEEK_OF_YEAR", calendar.get(Calendar.WEEK_OF_YEAR)-1);
+        result.put("DAY_OF_WEEK", calendar.get(Calendar.DAY_OF_WEEK));
         return result;
 
     }
