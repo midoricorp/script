@@ -229,7 +229,10 @@ public class Script{
 				symbolTable.peek().put(name, "");
 			} else {
 				Object eval = op.eval();
-				if (eval instanceof Assignable || eval instanceof ObjectReference) {
+				if (eval instanceof Assignable ) {
+					Assignable ass = (Assignable)eval;
+					symbolTable.peek().put(name, ass.getValue());
+				} else if (eval instanceof ObjectReference) {
 					symbolTable.peek().put(name, eval);
 				} else {
 					symbolTable.peek().put(name, new ObjectReference(eval));
@@ -1527,9 +1530,10 @@ public class Script{
 
 		public Object getValue() {
 			Object obj = symbolTable.peek().get(name);
+			/*
 			if (obj instanceof Assignable) {
 				return ((Assignable)obj).getValue();
-			}
+			}*/
 			return obj;
 		}
 
@@ -1579,7 +1583,12 @@ public class Script{
 			}
 			Assignable ass = (Assignable)larg;
 			Object v = right.eval();
-			ass.assign(v);
+			if (v instanceof Assignable ) {
+				Assignable rass = (Assignable) v;
+				ass.assign(rass.getValue());
+			} else {
+				ass.assign(v);
+			}
 			return v;
 		}
 	}

@@ -64,6 +64,16 @@ public class Function extends UnaryOperator implements Cloneable {
 				objs.add(obj);
 			}
 		}
-		return objs;
+
+		ArrayList<Object> result = new ArrayList<Object>(objs.size());
+		for(Object obj : objs) {
+			if(obj instanceof Assignable) {
+				Assignable ass = (Assignable)obj;
+				result.add(ass.getValue());
+			} else {
+				result.add(obj);
+			}
+		}
+		return result;
 	}
 }
