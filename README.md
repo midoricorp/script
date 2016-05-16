@@ -115,7 +115,9 @@ There are some functions built directly into the language
 * pop( list ) - removes the last element from the list and returns it
 
 * gmtime([timestamp]) - returns a map with information of the date specified by unix epoch timestamp (seconds since 1970).  If timestap is omitted the current time is used.
+
 The following information is returned:
+
 Key | Meaning
 ----|--------
 YEAR|Year
