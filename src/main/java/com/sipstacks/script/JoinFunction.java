@@ -26,10 +26,6 @@ public class JoinFunction extends Function implements Cloneable {
 
         for (int i = 1; i < objs.size(); i++) {
             Object o = objs.get(i);
-            if (o instanceof Assignable) {
-                Assignable assignable = ((Assignable) o);
-                o = assignable.getValue();
-            }
 
             if (o instanceof ObjectReference) {
                 ObjectReference reference = (ObjectReference)o;

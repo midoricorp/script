@@ -113,3 +113,19 @@ There are some functions built directly into the language
 
 * shift( list ) - removes the first element from the list and returns it
 * pop( list ) - removes the last element from the list and returns it
+
+* gmtime([timestamp]) - returns a map with information of the date specified by unix epoch timestamp (seconds since 1970).  If timestap is omitted the current time is used.
+The following information is returned:
+Key | Meaning
+----|--------
+YEAR|Year
+MONTH|1-12 the month number
+DAY|the day of the month (1-31)
+HOUR|the hour in 12 hour format (1-12)
+AM_PM|has the value AM or PM
+HOUR_24|the hour in 24 hour format (0-23)
+MINUTE|the minute of the hour
+SECOND|the seconds of the minute
+WEEK_OF_YEAR|the current week of the year (1-52)
+
+

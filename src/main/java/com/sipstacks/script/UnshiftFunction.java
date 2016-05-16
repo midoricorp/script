@@ -19,14 +19,10 @@ public class UnshiftFunction extends Function implements Cloneable {
         }
 
         if (objs.size() == 1) {
-            throw new ScriptParseException("unshift(): list required");
+            throw new ScriptParseException("unshift(): item(s) required");
         }
 
         Object param = objs.get(0);
-        if(param instanceof Assignable) {
-            Assignable assignable = (Assignable) param;
-            param = assignable.getValue();
-        }
 
         if (param instanceof ObjectReference) {
             if (((ObjectReference) param).toJSON() == null) {

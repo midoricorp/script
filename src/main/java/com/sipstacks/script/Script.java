@@ -58,8 +58,7 @@ public class Script{
 		addFunction(new PopFunction());
 		addFunction(new PushFunction());
 		addFunction(new UnshiftFunction());
-
-
+		addFunction(new GmTime());
 	}
 
 	public void setLoopLimit(int limit) {

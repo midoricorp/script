@@ -19,10 +19,6 @@ public class PopFunction extends Function implements Cloneable {
         }
 
         Object param = objs.get(0);
-        if(param instanceof Assignable) {
-            Assignable assignable = (Assignable) param;
-            param = assignable.getValue();
-        }
 
         if (param instanceof ObjectReference) {
             if (((ObjectReference) param).toJSON() == null) {
