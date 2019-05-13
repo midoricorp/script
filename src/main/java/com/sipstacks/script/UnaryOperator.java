@@ -17,7 +17,7 @@ abstract class UnaryOperator implements Expression {
 
 	public String dump() {
 		String rightstr = right==null?"undefined":right.dump();
-		return operator + " " + rightstr;
+		return " " + operator + rightstr;
 	}
 
 	@Override
@@ -25,6 +25,11 @@ abstract class UnaryOperator implements Expression {
 		if (right != null) {
 			right.getFunctions(functions);
 		}
+	}
+
+	@Override
+	public boolean complete() {
+		return right != null;
 	}
 
 }

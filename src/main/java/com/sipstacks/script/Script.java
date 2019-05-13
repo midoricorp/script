@@ -770,6 +770,11 @@ public class Script{
 		}
 	}
 
+	private interface AlsoBinary {
+
+		BinaryOperator getBinary();
+
+	}
 	private class LParen implements com.sipstacks.script.Expression {
 		com.sipstacks.script.Expression inner;
 		public Object eval() throws ScriptParseException {
@@ -795,6 +800,11 @@ public class Script{
 		public void getFunctions(List<Function> functions) {
 			inner.getFunctions(functions);
 		}
+
+		@Override
+		public boolean complete() {
+			return inner != null;
+		}
 	}
 
 	private class RParen implements com.sipstacks.script.Expression {
@@ -808,6 +818,11 @@ public class Script{
 
 		public void getFunctions(List<Function> functions) {
 
+		}
+
+		@Override
+		public boolean complete() {
+			return true;
 		}
 	}
 
@@ -897,6 +912,11 @@ public class Script{
 		public void getFunctions(List<Function> functions) {
 
 		}
+
+		@Override
+		public boolean complete() {
+			return false;
+		}
 	}
 
 	private static abstract class BinaryOperator implements com.sipstacks.script.Expression {
@@ -934,6 +954,11 @@ public class Script{
 			}
 		}
 
+		@Override
+		public boolean complete() {
+			return (left != null && right != null);
+		}
+
 	}
 
 	private static abstract class PostfixOperator implements com.sipstacks.script.Expression {
@@ -961,6 +986,11 @@ public class Script{
 			if (left != null) {
 				left.getFunctions(functions);
 			}
+		}
+
+		@Override
+		public boolean complete() {
+			return left != null;
 		}
 
 	}
@@ -1091,6 +1121,19 @@ public class Script{
 		}
 	}
 
+	private class Positive extends UnaryOperator  implements AlsoBinary{
+		public Positive() { operator = "+"; }
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			return Integer.valueOf(parseInteger(right.eval().toString()));
+		}
+
+		@Override
+		public BinaryOperator getBinary() {
+			return new Add();
+		}
+	}
+
 	private class Add extends BinaryOperator {
 
 		public Add() {
@@ -1101,9 +1144,23 @@ public class Script{
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) + parseInteger(right.eval().toString()));
 		}
+
+
 	}
 
-	private class Subtract extends BinaryOperator {
+	private class Negative extends UnaryOperator implements AlsoBinary {
+		public Negative() { operator = "-"; }
+		public Object eval() throws ScriptParseException {
+			super.eval();
+			return -Integer.valueOf(parseInteger(right.eval().toString()));
+		}
+
+		@Override
+		public BinaryOperator getBinary() {
+			return new Subtract();
+		}
+	}
+	private class Subtract extends BinaryOperator  {
 
 		public Subtract() {
 			operator = "-";
@@ -1113,6 +1170,7 @@ public class Script{
 			super.eval();
 			return Integer.valueOf(parseInteger(left.eval().toString()) - parseInteger(right.eval().toString()));
 		}
+
 	}
 
 	private class Multiply extends BinaryOperator {
@@ -1444,6 +1502,11 @@ public class Script{
 		public void getFunctions(List<Function> functions) {
 
 		}
+
+		@Override
+		public boolean complete() {
+			return true;
+		}
 	}
 
 	private class Rand implements com.sipstacks.script.Expression {
@@ -1463,6 +1526,11 @@ public class Script{
 		@Override
 		public void getFunctions(List<Function> functions) {
 
+		}
+
+		@Override
+		public boolean complete() {
+			return true;
 		}
 	}
 
@@ -1491,6 +1559,11 @@ public class Script{
 		public void getFunctions(List<Function> functions) {
 
 		}
+
+		@Override
+		public boolean complete() {
+			return true;
+		}
 	}
 
 	private static class NoOP implements com.sipstacks.script.Expression, Listable {
@@ -1509,6 +1582,11 @@ public class Script{
 		@Override
 		public void getFunctions(List<Function> functions) {
 
+		}
+
+		@Override
+		public boolean complete() {
+			return true;
 		}
 	}
 
@@ -1563,6 +1641,11 @@ public class Script{
 		@Override
 		public void getFunctions(List<Function> functions) {
 
+		}
+
+		@Override
+		public boolean complete() {
+			return true;
 		}
 	}
 
@@ -1632,9 +1715,9 @@ public class Script{
 
 	private com.sipstacks.script.Expression tokenToOp(String input) throws ScriptParseException {
 		  if (input.equals("+")) {
-			return new Add();
+			return new Positive();
 		  } else if(input.equals("-")) {
-			return new Subtract();
+			return new Negative();
 		  } else if(input.equals("*")) {
 			return new Multiply();
 		  } else if(input.equals("/")) {
@@ -1738,6 +1821,8 @@ public class Script{
 
 		op = new OperationSet(false);
 		op.operators.add(Not.class);
+		op.operators.add(Positive.class);
+		op.operators.add(Negative.class);
 		classes.add(op);
 
 		op = new OperationSet(true);
@@ -1871,30 +1956,55 @@ public class Script{
 							if (ops.size() == (i+1) || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
 								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument expected");
 							}
+							if (!ops.get(i+1).complete()) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument incomplete\n" + ops.get(i+1).dump() );
+							}
+
+							if (AlsoBinary.class.isAssignableFrom(command.getClass())) {
+								AlsoBinary alsoBinary = (AlsoBinary)command;
+								if (i > start && ops.get(i-1).complete()) {
+									ops.set(i,alsoBinary.getBinary());
+									continue;
+								}
+							}
 							op.right = ops.get(i+1);
 							ops.remove(i+1);
 						} else if (LBracket.class.isAssignableFrom(command.getClass())) {
 							// works like binary operator but we handle [] like ()
 							BinaryOperator op = (BinaryOperator)command;
+							if (!ops.get(i-1).complete()) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Left hand argument incomplete\n" + ops.get(i-1).dump() );
+							}
 							op.left = ops.get(i-1);
 							ops.remove(i-1);
 							i--;
 						} else if (PostfixOperator.class.isAssignableFrom(command.getClass())) {
 							PostfixOperator op = (PostfixOperator)command;
+							if (!ops.get(i-1).complete()) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Left hand argument incomplete\n" + ops.get(i-1).dump() );
+							}
 							op.left = ops.get(i-1);
 							ops.remove(i-1);
 							i--;
 						} else if (BinaryOperator.class.isAssignableFrom(command.getClass())) {
 							BinaryOperator op = (BinaryOperator)command;
+							ScriptParseException e = null;
 							if (ops.size() == (i+1) || (start > 0 && terminator.isInstance(ops.get(i+1))) ) {
 								throw new ScriptParseException(command.getClass().getName() + " expected Right hand argument after " + ops.get(i-1).dump());
 							}
+							if (i == start) {
+								throw new ScriptParseException(command.getClass().getName() + " expected Left hand argument after " + ops.get(i+1).dump());
+							}
+							if (!ops.get(i-1).complete() || !ops.get(i+1).complete()) {
+								throw new ScriptParseException(command.getClass().getName() + " evaluating before left & right evaluated\nleft:" + ops.get(i-1).dump()+"\nright:"+ops.get(i+1).dump());
+							}
 
-							op.left = ops.get(i-1);
-							op.right = ops.get(i+1);
-							ops.remove(i+1);
-							ops.remove(i-1);
+							op.left = ops.get(i - 1);
+							op.right = ops.get(i + 1);
+							ops.remove(i + 1);
+							ops.remove(i - 1);
 							i--;
+
 						}
 					}
 				}
