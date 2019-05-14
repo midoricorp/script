@@ -16,8 +16,8 @@ while(i) {
 	print line;
 	i--;
 }
-j=(size+1)*2;
-line ="";
+var j=(size+1)*2;
+var line ="";
 while(j--) {
 	line=line."*";
 

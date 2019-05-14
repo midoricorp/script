@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 public class Script{
   
 
-	Stack<Hashtable <String, Object>> symbolTable = new Stack<Hashtable<String,Object>>();
+	Stack<ScopedHashtable> symbolTable = new Stack<ScopedHashtable>();
 	Hashtable <String, Function> functionTable = new Hashtable<String,Function>();
 	ScriptScanner scanner;
 	Random random;
@@ -35,16 +35,16 @@ public class Script{
 
 	int loopLimit;
 
-	private void enterScope() {
-		symbolTable.push(new Hashtable<String,Object>());
+	private void pushStack() {
+		symbolTable.push(new ScopedHashtable());
 	}
 
-	private void exitScope() {
+	private void popStack() {
 		symbolTable.pop();
 	}
 
 	public Script(Reader in) {
-		enterScope();
+		pushStack();
 		scanner = new ScriptScanner(in);
 		random = new Random();
 		loopLimit = -1; // default no limit
@@ -371,7 +371,7 @@ public class Script{
 		}
 
 		public void exec(OutputStream os, List<String> arg) throws ScriptParseException, ScriptFlowException {
-			enterScope();
+			pushStack();
 			int i = 0;
 			symbolTable.peek().put("_", JSONValue.toJSONString(arg));
 			try {
@@ -379,7 +379,7 @@ public class Script{
 			} catch (ScriptReturnFlowException e) {
 				// somebody called return, consume it and return
 			}
-			exitScope();
+			popStack();
 		}
 
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
@@ -388,13 +388,13 @@ public class Script{
 			}
 			totalCalls++;
 
-			enterScope();
+			pushStack();
 			try {
 				cmd.exec(os);
 			} catch (ScriptReturnFlowException e) {
 				// somebody called return, consume it and return
 			}
-			exitScope();
+			popStack();
 		}
 
 		public void reset() {
@@ -420,12 +420,14 @@ public class Script{
 			exec(os);
 		}
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
+			symbolTable.peek().enterScope();
 			if (parseBoolean(op.eval().toString())) {
 				cmd.exec(os);
 			}
 			else if (else_cmd != null) {
 				else_cmd.exec(os);
 			}
+			symbolTable.peek().exitScope();
 		}
 
 		public String dump() {
@@ -533,6 +535,7 @@ public class Script{
 		}
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			int counter = 0;
+			symbolTable.peek().enterScope();
 			while (parseBoolean(op.eval().toString())) {
 				if(loopLimit > 0 && counter > loopLimit) {
 					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter + " Condition=" + op.eval());
@@ -550,6 +553,7 @@ public class Script{
 				counter++;
 				totalCalls++;
 			}
+			symbolTable.peek().exitScope();
 		}
 
 		public String dump() {
@@ -631,9 +635,11 @@ public class Script{
 			exec(os);
 		}
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
+			symbolTable.peek().enterScope();
 			for (Statement cmd : statements) {
 				cmd.exec(os);
 			}
+			symbolTable.peek().exitScope();
 		}
 
 		public String dump() {
@@ -1627,9 +1633,9 @@ public class Script{
 			}
 
 			if (value instanceof ObjectReference || value instanceof Assignable) {
-				symbolTable.peek().put(name, value);
+				symbolTable.peek().update(name, value);
 			} else {
-				symbolTable.peek().put(name, new ObjectReference(value));
+				symbolTable.peek().update(name, new ObjectReference(value));
 			}
 
 		}
