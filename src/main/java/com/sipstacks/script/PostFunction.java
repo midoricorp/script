@@ -40,17 +40,41 @@ public class PostFunction extends Function implements Cloneable {
 
 		Map map = (Map)param;
 		for(Object key : map.keySet()) {
-			if(result.length() != 0) {
+			Object value = map.get(key);
+			encodeElement(key, value, result);
+		}
+		return result.toString();
+
+	}
+
+	private void encodeElement(Object key, Object value, StringBuffer result) {
+		if (!(value instanceof Map) && !(value instanceof List)) {
+			Object param = JSONValue.parse(value.toString());
+			if (param != null) value = param;
+		}
+		if (value instanceof Map) {
+			Map subMap = (Map) value;
+			for (Object subKey : subMap.keySet()) {
+				encodeElement(key + "[" + subKey + "]", subMap.get(subKey), result);
+			}
+		} else if (value instanceof List) {
+			List subList = (List) value;
+			int index = 0;
+			for (Object subValue : subList) {
+				encodeElement(key + "[" + index++ + "]", subValue, result);
+			}
+
+		} else {
+			if (result.length() != 0) {
 				result.append("&");
 			}
 			result.append(key.toString());
 			result.append("=");
 			try {
-				result.append(URLEncoder.encode(map.get(key).toString(), "UTF-8"));
-			} catch (UnsupportedEncodingException e) {}
+				result.append(URLEncoder.encode(value.toString(), "UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+			}
 		}
-		return result.toString();
-
 	}
 
 	public Object eval() throws ScriptParseException  {
