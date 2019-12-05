@@ -1331,6 +1331,11 @@ public class Script{
 			operator = "sizeof";
 		}
 
+		public String dump() {
+			String rightstr = right==null?"undefined":right.dump();
+			return " " + operator + " " + rightstr;
+		}
+
 		public Object eval() throws ScriptParseException {
 			super.eval();
 			Object eval = right.eval();
