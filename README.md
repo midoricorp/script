@@ -103,7 +103,8 @@ There are some functions built directly into the language
 * get url - sends an http request to the given url (with Accept json), returns the response.
 * url_encode - performs url escaping, usefull when trying to build urls for get
 * html_encode - performs xhtml escaping, useful when you want to make sure no illegal characters are in the xhtml body you are building
-
+* lc - converts string to lowercase
+* uc - converts string to uppercase
 
 * split( string, [expression] ) - splits a string based on the regex, if regex is omitted the default is "\\s+"
 * join( delimiter, [list | arg ]+ ) - will join all elements of all specifed lists and arguments with the specified delimiter

@@ -11,3 +11,9 @@ list = split("This is a test!");
 print "Expected: [\"This\", \"is\", \"a\", \"test\"] Got: " . list;
 list = split("BaaDabEbF", "[ab]+");
 print "Expected: [\"B\", \"D\", \"E\", \"F\"] Got: " . list;
+
+var msg = "TEST";
+print "Expected: test Got: " . lc(msg);
+
+msg = "test";
+print "Expected: TEST Got: " . uc(msg);

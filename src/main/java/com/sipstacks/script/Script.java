@@ -52,6 +52,10 @@ public class Script{
 		addFunction(new PostFunction());
 		addStatementFunction("html_encode", new HtmlEncodeFunction());
 		addStatementFunction("url_encode", new UrlEncodeFunction());
+		addStatementFunction("url_encode", new UrlEncodeFunction());
+		addStatementFunction("uc", new ToUppercaseFunction());
+		addStatementFunction("lc", new ToLowercaseFunction());
+
 		addFunction(new SplitFunction());
 		addFunction(new JoinFunction());
 		addFunction(new ShiftFunction());
