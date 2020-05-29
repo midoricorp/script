@@ -19,6 +19,7 @@ src/main/resources/
 ##Language Syntax
 
 **Note:** the language ignores white space
+\# can be used to put comments in code. comments get discarded by the parser and will not appear in re-generated code
 
 ###Operators (In order of Precedence)
 * (*expression*) - evaluate *expression* first, changes order of operations

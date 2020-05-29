@@ -29,6 +29,7 @@ class ScriptScanner {
 
 		boolean skipWhiteSpace = true;
 		boolean inQuotes = false;
+		boolean inComment = false;
 
 		// if whe have pending pushedBack tokens
 		// retun them first
@@ -53,8 +54,16 @@ class ScriptScanner {
 					continue;
 				}
 
-
 				skipWhiteSpace = false;
+
+				if (inComment) {
+					if ( c == '\n') {
+						skipWhiteSpace = true;
+						inComment = false;
+						lineNo++;
+					}
+					continue;
+				}
 
 				if (inQuotes && c != '\"' && c != '“' && c != '”')  {
 					if(c == '\\') {
@@ -95,6 +104,18 @@ class ScriptScanner {
 					inQuotes = true;
 					sb.append('"');
 					continue;
+				}
+
+				if (c == '#') {
+					if(sb.length() > 0) {
+						//hit beginning of a comment process the current token
+						//before eating the comment
+						pr.unread(c);
+						return sb.toString();
+					} else {
+						inComment = true;
+						continue;
+					}
 				}
 
 				// not and not equals
@@ -253,6 +274,7 @@ class ScriptScanner {
 						return sb.toString();
 					} else {
 						// this char is invalid, puke & die
+						System.err.println("puking on " + c);
 						return null;
 					}
 				}
