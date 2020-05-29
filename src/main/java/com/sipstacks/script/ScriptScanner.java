@@ -45,7 +45,7 @@ class ScriptScanner {
 				char c = (char)input;
 
 				if (skipWhiteSpace && 
-					(c == ' ' || c == '\t' || c == '\n' || c == '\r')) {
+					(c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\u00A0')) {
 
 					if ( c == '\n' ) {
 						lineNo++;
