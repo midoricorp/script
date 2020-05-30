@@ -23,33 +23,33 @@ src/main/resources/
 
 ###Operators (In order of Precedence)
 * (*expression*) - evaluate *expression* first, changes order of operations
-* ->  - get element from a JSON Map - can also be on the left side of an assign to modify the JSON map
+* `->`  - get element from a JSON Map - can also be on the left side of an assign to modify the JSON map
 * [*expression*] - get index from JSON array specified by *expression* - can also be on the left side of an assign to modify the JSON array
 * function *param* - all functions take one parameter, if *param* is an expression it should be surrounded by ()
-* ++ - Post Increment
-* -- - Post Decrement
-* ! - Not operator
-* =~ - Binding Operator - Used for binding a regex to a string (substitution or matching)
-* * - Multiply
-* / - Divide
-* % - Modulo
-* + - Add
-* - - Subtract
-* . - String Concatenation
-* sizeof - returns sizeof an array, 0 if not an array
-* keys - returns the keys of a map as an array, empty array if not a map
-* > - Greater Than
-* >= - Greater Than or Equals
-* < - Less Than
-* <= - Less Than or Equals
-* == - Equals
-* != - Not Equals
-* & - Bitwise And
-* | - Bitwise Or
-* && - Conditional And
-* || - Conditional Or
-* = - Assign
-* , - Comma operatior - can make lists or return right param depending on context
+* `++` - Post Increment
+* `--` - Post Decrement
+* `!` - Not operator
+* `=~` - Binding Operator - Used for binding a regex to a string (substitution or matching)
+* `*` - Multiply
+* `/` - Divide
+* `%` - Modulo
+* `+` - Add
+* `-` - Subtract
+* `.` - String Concatenation
+* `sizeof` - returns sizeof an array, 0 if not an array
+* `keys` - returns the keys of a map as an array, empty array if not a map
+* `>` - Greater Than
+* `>=` - Greater Than or Equals
+* `<` - Less Than
+* `<=` - Less Than or Equals
+* `==` - Equals
+* `!=` - Not Equals
+* `&` - Bitwise And
+* `|` - Bitwise Or
+* `&&` - Conditional And
+* `||` - Conditional Or
+* `=` - Assign
+* `,` - Comma operatior - can make lists or return right param depending on context
  
 ###Data Types
 All variables are stored as strings, and parsed as integers or JSON as required by operators.  Conditional operators consider "0" or "" to be false and everything else to be true
