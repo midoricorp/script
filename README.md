@@ -16,12 +16,12 @@ example apps are in
 src/main/resources/
 ```
 
-##Language Syntax
+## Language Syntax
 
 **Note:** the language ignores white space
 \# can be used to put comments in code. comments get discarded by the parser and will not appear in re-generated code
 
-###Operators (In order of Precedence)
+### Operators (In order of Precedence)
 * (*expression*) - evaluate *expression* first, changes order of operations
 * `->`  - get element from a JSON Map - can also be on the left side of an assign to modify the JSON map
 * [*expression*] - get index from JSON array specified by *expression* - can also be on the left side of an assign to modify the JSON array
@@ -51,14 +51,14 @@ src/main/resources/
 * `=` - Assign
 * `,` - Comma operatior - can make lists or return right param depending on context
  
-###Data Types
+### Data Types
 All variables are stored as strings, and parsed as integers or JSON as required by operators.  Conditional operators consider "0" or "" to be false and everything else to be true
 
 * "quoted string" - a string, can have \t\n\" as escape characters
 * rand - returns a random positive integer
 * *variable* - if declared with var, evaluates to it's curent value
 
-###Flow Control
+### Flow Control
 * if (*expression*) statement [ else statement ]  - executes command if *expression* is true, can have optional else block
 * while (*expression*) statement - executes command while *expression* is true
 * {[statement;]*} - statement block, allows for several statements to be treated as one statement
@@ -67,7 +67,7 @@ All variables are stored as strings, and parsed as integers or JSON as required 
 * break; - exit from the while loop
 * return; - exit from a sub command
 
-###Statements
+### Statements
 
 statements should be terminated by ;
 
@@ -78,7 +78,7 @@ statements should be terminated by ;
 * sub *token* command - declares *token* as a function
 
 
-###Functions
+### Functions
 
 Functions are declared by the "sub" command.  Parameters are passed in the _ variable.  Functions act as stand-alone subroutines and cannot access variables declared outside of the function.
 
@@ -91,14 +91,14 @@ the right hand operator of =~ is a string that can take multiple forms
 ** m - multiline  the expressions ^ and $ match just after or just before, respectively, a line terminator or the end of the input sequence
 * "/regex/replace/options" - replace everything matched by regex with replace
 
-###Output
+### Output
 
 There are two available output streams TEXT and HTML.  All scripts should have a TEXT output and can also have an optional HTML output.  Output is done with the print command which has the following syntax
 * print [STREAM] msg
 
 If STREAM is omitted it defauts to TEXT
 
-###Built-in Functions
+### Built-in Functions
 
 There are some functions built directly into the language
 * get url - sends an http request to the given url (with Accept json), returns the response.
