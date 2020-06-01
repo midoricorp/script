@@ -470,7 +470,11 @@ public class Script{
 			String str = "if (" + op.dump() + ")\n" + cmd.dump();
 
 			if (else_cmd != null) {
-				str += " else \n" + else_cmd.dump();
+				str += "else ";
+				if(!(else_cmd instanceof If)) {
+					str +="\n";
+				}
+				str += else_cmd.dump();
 			}
 
 			return str;
