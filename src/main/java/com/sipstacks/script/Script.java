@@ -7,6 +7,8 @@ import java.util.Stack;
 import java.util.List;
 import java.util.Random;
 import org.json.simple.*;
+
+import javax.script.ScriptException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -78,7 +80,16 @@ public class Script{
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			// allow expression to be just a ;
 			if (op != null) {
-				op.eval();
+				try {
+					op.eval();
+				} catch (ScriptParseException e) {
+					StringBuffer sb = new StringBuffer();
+					sb.append("The following Statement\n");
+					sb.append(op.dump());
+					sb.append("Generated the following error\n");
+					sb.append(e.getMessage());
+					throw new ScriptFlowException(sb.toString());
+				}
 			}
 		}
 
@@ -231,7 +242,17 @@ public class Script{
 			if (op == null) {
 				symbolTable.peek().put(name, "");
 			} else {
-				Object eval = op.eval();
+				Object eval = null;
+				try {
+					eval = op.eval();
+				} catch (ScriptParseException e) {
+					StringBuffer sb = new StringBuffer();
+					sb.append("The following Statement\n");
+					sb.append(dump());
+					sb.append("Generated the following error\n");
+					sb.append(e.getMessage());
+					throw new ScriptFlowException(sb.toString());
+				}
 				if (eval instanceof Assignable ) {
 					Assignable ass = (Assignable)eval;
 					symbolTable.peek().put(name, ass.getValue());
@@ -425,7 +446,18 @@ public class Script{
 		}
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			symbolTable.peek().enterScope();
-			if (parseBoolean(op.eval().toString())) {
+			boolean b = false;
+			try{
+				b = parseBoolean(op.eval().toString());
+			} catch (ScriptParseException e) {
+				StringBuffer sb = new StringBuffer();
+				sb.append("The following Statement\n");
+				sb.append("if (" + op.dump() + ")\n");
+				sb.append("Generated the following error\n");
+				sb.append(e.getMessage());
+				throw new ScriptFlowException(sb.toString());
+			}
+			if (b) {
 				cmd.exec(os);
 			}
 			else if (else_cmd != null) {
@@ -540,7 +572,19 @@ public class Script{
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			int counter = 0;
 			symbolTable.peek().enterScope();
-			while (parseBoolean(op.eval().toString())) {
+			while (true) {
+				boolean b = false;
+				try {
+					b = parseBoolean(op.eval().toString());
+				} catch (ScriptParseException e) {
+					StringBuffer sb = new StringBuffer();
+					sb.append("The following Statement\n");
+					sb.append("while (" + op.dump() + ")\n");
+					sb.append("Generated the following error\n");
+					sb.append(e.getMessage());
+					throw new ScriptFlowException(sb.toString());
+				}
+				if (!b) break;
 				if(loopLimit > 0 && counter > loopLimit) {
 					throw new ScriptParseException("While: loop count exceeded. Limit=" + loopLimit + " Current=" + counter + " Condition=" + op.eval());
 				}
@@ -711,10 +755,21 @@ public class Script{
 		}
 		public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 			if (op != null) {
+				String s = null;
+				try {
+					s =op.eval().toString();
+				} catch (ScriptParseException e) {
+					StringBuffer sb = new StringBuffer();
+					sb.append("The following Statement\n");
+					sb.append(dump());
+					sb.append("Generated the following error\n");
+					sb.append(e.getMessage());
+					throw new ScriptFlowException(sb.toString());
+				}
 				if (isHtml) {
-					os.appendHtml(op.eval().toString() + "\n");
+					os.appendHtml(s + "\n");
 				} else {
-					os.appendText(op.eval().toString() + "\n");
+					os.appendText(s + "\n");
 				}
 			} else {
 				if (isHtml) {
