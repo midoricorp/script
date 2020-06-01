@@ -15,6 +15,7 @@ example apps are in
 ```
 src/main/resources/
 ```
+For real world examples check out the [Snippet Archive](https://github.com/midoricorp/snippets)
 
 ## Language Syntax
 
