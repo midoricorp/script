@@ -7,9 +7,11 @@ public abstract class ExternalCommand implements Statement {
 
 	public void exec(OutputStream os) throws ScriptParseException, ScriptFlowException {
 		os.appendText(run(null));
+		os.trimText();
 	}
 	public void exec(OutputStream os, List<String> args) throws ScriptParseException, ScriptFlowException {
 		os.appendText(run(args));
+		os.trimText();
 	}
 
 	public void reset() {}

@@ -20,6 +20,13 @@ public class OutputStream {
 		return this;
 	}
 
+	public OutputStream trimText() {
+		if (this.txt.charAt(this.txt.length()-1) == '\n') {
+			this.txt.setLength(this.txt.length()-1);
+		}
+		return this;
+	}
+
 	public OutputStream appendHtml(String html) {
 		this.html.append(html);
 		return this;

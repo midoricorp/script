@@ -19,6 +19,7 @@ public class StatementFunction extends Function implements Cloneable  {
         try {
             OutputStream result = new OutputStream();
             stmt.exec(result, strs);
+            result.trimText();
             return result;
         } catch (ScriptFlowException e) {
             throw new ScriptParseException(e.getMessage());
